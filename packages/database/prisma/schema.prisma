@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. The Company Table (B2B Multi-Tenancy Core)
+model Tenant {
+  id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name               String
+  subscriptionStatus String        @default("active") // active, past_due, canceled
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  users              User[]
+  transactions       Transaction[]
+
+  @@map("tenants")
+}
+
+// 2. Role-Based Access Control (RBAC)
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique // e.g., "SuperAdmin", "Manager", "Viewer"
+  permissions Json     // e.g., ["create:user", "delete:transaction"]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users       User[]
+
+  @@map("roles")
+}
+
+// 3. The Authentication Table
+model User {
+  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String        @unique
+  passwordHash String
+  isActive     Boolean       @default(true)
+  
+  // Foreign Keys
+  tenantId     String        @db.Uuid
+  roleId       String        @db.Uuid
+  
+  // Relations
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  role         Role          @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Security Flex: Prevent looking up a user without their tenant context
+  @@index([tenantId, email])
+  @@map("users")
+}
+
+// 4. The Data Table Flex (Dummy B2B Data)
+model Transaction {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  amount      Decimal  @db.Decimal(10, 2)
+  status      String   @default("pending") // pending, completed, failed
+  description String
+
+  // Foreign Keys
+  tenantId    String   @db.Uuid
+  userId      String   @db.Uuid
+
+  // Relations
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Performance Flex: Indexing for fast server-side pagination and filtering
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@map("transactions")
+}
