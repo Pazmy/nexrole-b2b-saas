@@ -1,0 +1,25 @@
+/*node_modules# Dependency directories
+node_modules/
+/apps/*/node_modules
+/packages/*/node_modules
+
+# Next.js build output
+/apps/web/.next/
+/apps/web/out/
+
+# Express build output (if you compile TS to JS later)
+/apps/api/dist/
+
+# Environment variables (NEVER push secrets to GitHub)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Misc
+.DS_Store
+*.pem
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
