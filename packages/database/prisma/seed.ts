@@ -14,7 +14,17 @@ async function main() {
     },
   });
 
-  // 2. Create a Tenant (Company)
+  // 2. Check if admin user already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email: "admin@sensei.com" },
+  });
+
+  if (existingUser) {
+    console.log("✅ Seed skipped: admin@sensei.com already exists");
+    return;
+  }
+
+  // 3. Create a Tenant (Company)
   const tenant = await prisma.tenant.create({
     data: {
       name: "Sensei Corp",
@@ -22,7 +32,7 @@ async function main() {
     },
   });
 
-  // 3. Create a User
+  // 4. Create a User
   await prisma.user.create({
     data: {
       email: "admin@sensei.com",
