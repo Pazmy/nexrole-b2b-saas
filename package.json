@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w packages/database && npm run build -w apps/web",
     "lint": "npm run lint --workspaces --if-present",
     "db:generate": "npm run generate -w packages/database",
     "db:push": "npm run push -w packages/database"
