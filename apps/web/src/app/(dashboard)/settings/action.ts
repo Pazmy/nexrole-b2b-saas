@@ -4,7 +4,15 @@ import { auth } from "@/auth";
 import { prisma } from "@nexrole/database";
 import { revalidatePath } from "next/cache";
 
-export async function updateTenantProfile(prevState: any, formData: FormData) {
+export interface ProfileFormState {
+  error?: string | null;
+  success?: string | null;
+}
+
+export async function updateTenantProfile(
+  prevState: ProfileFormState | null,
+  formData: FormData
+) {
   const session = await auth();
 
   const tenantId = (session?.user as { tenantId: string })?.tenantId;
