@@ -12,7 +12,7 @@ export function ProfileForm({
   userRole,
 }: {
   tenant: Tenant | null;
-  userRole: string;
+  userRole?: string;
 }) {
   const [state, formAction, isPending] = useActionState(
     updateTenantProfile,

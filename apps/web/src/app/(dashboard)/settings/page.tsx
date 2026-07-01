@@ -16,8 +16,8 @@ enum Tabs {
 
 export default async function SettingsPage({ searchParams }: PageProps) {
   const session = await auth();
-  const tenantId = (session?.user as any)?.tenantId;
-  const userRole = (session?.user as any)?.role;
+  const tenantId = (session?.user as { tenantId?: string })?.tenantId;
+  const userRole = (session?.user as { role?: string })?.role;
 
   const resolvedParams = await searchParams;
   const activeTab = resolvedParams.tab || Tabs.Profile;
