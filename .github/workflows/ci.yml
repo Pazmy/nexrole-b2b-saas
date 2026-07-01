@@ -8,6 +8,8 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  DATABASE_URL: postgresql://postgres:admin@localhost:5432/nexrole_db?schema=public
+  AUTH_SECRET: f6c8d20387b3a4f6be4e3f898e0e84b8d789060ab725c4ef6a72b89d5a71df5c
 
 jobs:
   build-and-test:
