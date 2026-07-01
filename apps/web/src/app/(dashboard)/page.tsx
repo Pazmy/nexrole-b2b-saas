@@ -5,7 +5,7 @@ import { DollarSign, CreditCard, Activity, CheckCircle2 } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await auth();
-  const tenantId = (session?.user as any)?.tenantId;
+  const tenantId = (session?.user as { tenantId?: string })?.tenantId;
 
   // 1. Fetch Aggregated Metrics Scoped strictly to the Tenant
   const [totalTransactions, pendingCount, completedCount, totalVolume] =

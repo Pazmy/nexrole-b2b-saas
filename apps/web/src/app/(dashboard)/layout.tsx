@@ -17,7 +17,7 @@ export default async function DashboardLayout({
   const session = await auth();
   const tenantName = session?.user?.name || "My Company";
   const userEmail = session?.user?.email;
-  const userRole = (session?.user as any)?.role || "Member";
+  const userRole = (session?.user as { role?: string })?.role || "Member";
 
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-white overflow-hidden">
