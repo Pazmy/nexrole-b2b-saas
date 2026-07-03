@@ -7,7 +7,7 @@ interface Tenant {
   name: string;
   subscriptionStatus: string;
 }
-export function ProfileForm({
+export default function ProfileForm({
   tenant,
   userRole,
 }: {

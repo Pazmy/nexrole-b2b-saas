@@ -23,6 +23,7 @@ model Tenant {
 
   users              User[]
   transactions       Transaction[]
+  apiKeys            ApiKey[]
 
   @@map("tenants")
 }
@@ -46,11 +47,11 @@ model User {
   email        String        @unique
   passwordHash String
   isActive     Boolean       @default(true)
-  
+
   // Foreign Keys
   tenantId     String        @db.Uuid
   roleId       String        @db.Uuid
-  
+
   // Relations
   tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   role         Role          @relation(fields: [roleId], references: [id], onDelete: Restrict)
@@ -99,4 +100,16 @@ model Invitation {
 
   @@index([token])
   @@map("invitations")
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  key       String   @unique // Stores the SHA-256 hash string
+  tenantId  String   @db.Uuid
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name      String // User-defined label (e.g., "Retool Dashboard Sync")
+  createdAt DateTime @default(now())
+
+  @@index([key])
+  @@map("apiKeys")
 }

@@ -46,3 +46,8 @@ export type Transaction = Prisma.TransactionModel;
  *
  */
 export type Invitation = Prisma.InvitationModel;
+/**
+ * Model ApiKey
+ *
+ */
+export type ApiKey = Prisma.ApiKeyModel;

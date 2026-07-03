@@ -1,10 +1,12 @@
 import { auth } from "@/auth";
 import { prisma } from "@nexrole/database";
-import { ProfileForm } from "./_components/ProfileForm";
+import ProfileForm from "./_components/ProfileForm";
+import InviteMemberForm from "@/components/invite-member-form";
+import DeveloperConsole from "@/components/developer-console";
 import { Building2, Users, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { ROLE } from "@/lib/constants";
-import InviteMemberForm from "@/components/invite-member-form";
+import { Code2 } from "lucide-react"; // Custom tab icon
 
 interface PageProps {
   searchParams: Promise<{ tab?: string }>;
@@ -13,6 +15,7 @@ interface PageProps {
 enum Tabs {
   Profile = "profile",
   Team = "team",
+  Developer = "developer",
 }
 
 export default async function SettingsPage({ searchParams }: PageProps) {
@@ -23,12 +26,16 @@ export default async function SettingsPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const activeTab = resolvedParams.tab || Tabs.Profile;
 
-  const [tenant, teamMembers] = await Promise.all([
+  const [tenant, teamMembers, apiKeys] = await Promise.all([
     prisma.tenant.findUnique({ where: { id: tenantId } }),
     prisma.user.findMany({
       where: { tenantId },
       include: { role: true },
       orderBy: { createdAt: "asc" },
+    }),
+    prisma.apiKey.findMany({
+      where: { tenantId },
+      orderBy: { createdAt: "desc" },
     }),
   ]);
 
@@ -67,6 +74,17 @@ export default async function SettingsPage({ searchParams }: PageProps) {
         >
           <Users className="h-4 w-4" />
           Team Members ({teamMembers.length})
+        </Link>
+        <Link
+          href={`?tab=${Tabs.Developer}`}
+          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-all ${
+            activeTab === Tabs.Developer
+              ? "border-blue-500 text-blue-400"
+              : "border-transparent text-zinc-400 hover:text-zinc-200"
+          }`}
+        >
+          <Code2 className="h-4 w-4" />
+          Developer Integrations
         </Link>
       </div>
 
@@ -154,6 +172,10 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             </div>
           </div>
         </div>
+      )}
+      {/* RENDER DEVELOPER CONSOLE SUB-PANEL VIEW */}
+      {activeTab === Tabs.Developer && (
+        <DeveloperConsole initialKeys={apiKeys} userRole={userRole} />
       )}
     </div>
   );
