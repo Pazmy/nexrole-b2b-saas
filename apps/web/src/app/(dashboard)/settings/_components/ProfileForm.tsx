@@ -1,6 +1,6 @@
 "use client";
 import { useActionState } from "react";
-import { updateTenantProfile } from "../action";
+import { updateTenantProfile } from "../update-tenant-profile-action";
 import { KeyRound, Shield, Loader2 } from "lucide-react";
 import { ROLE } from "@/lib/constants";
 interface Tenant {

@@ -4,6 +4,7 @@ import { ProfileForm } from "./_components/ProfileForm";
 import { Building2, Users, UserCheck } from "lucide-react";
 import Link from "next/link";
 import { ROLE } from "@/lib/constants";
+import InviteMemberForm from "@/components/invite-member-form";
 
 interface PageProps {
   searchParams: Promise<{ tab?: string }>;
@@ -100,11 +101,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             </div>
 
             {/* RBAC INTERFACE LOCK */}
-            {userRole === ROLE.SUPER_ADMIN && (
-              <button className="h-9 px-4 rounded-md bg-zinc-100 hover:bg-zinc-200 text-sm font-semibold text-zinc-950 transition-colors">
-                + Invite Workspace Member
-              </button>
-            )}
+            {userRole === ROLE.SUPER_ADMIN && <InviteMemberForm />}
           </div>
 
           <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
