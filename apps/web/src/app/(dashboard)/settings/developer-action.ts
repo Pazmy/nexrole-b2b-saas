@@ -8,8 +8,8 @@ import { revalidatePath } from "next/cache";
 // 1. Generate a brand new token profile securely
 export async function generateApiKey(name: string) {
   const session = await auth();
-  const tenantId = (session?.user as any)?.tenantId;
-  const userRole = (session?.user as any)?.role;
+  const tenantId = (session?.user as { tenantId: string })?.tenantId;
+  const userRole = (session?.user as { role: string })?.role;
 
   if (!tenantId || userRole !== "SuperAdmin") {
     throw new Error("Unauthorized access. SuperAdmin privileges required.");
@@ -46,8 +46,8 @@ export async function generateApiKey(name: string) {
 // 2. Revoke an existing API key
 export async function revokeApiKey(keyId: string) {
   const session = await auth();
-  const tenantId = (session?.user as any)?.tenantId;
-  const userRole = (session?.user as any)?.role;
+  const tenantId = (session?.user as { tenantId: string })?.tenantId;
+  const userRole = (session?.user as { role: string })?.role;
 
   if (!tenantId || userRole !== "SuperAdmin") {
     throw new Error("Unauthorized access.");
