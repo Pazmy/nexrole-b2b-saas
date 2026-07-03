@@ -42,11 +42,12 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
 
 **Objective:** Replace manual database seeding routines with automated public onboarding workflows and a cryptographic team invitation pipeline.
 
-- [ ] **Step 4.1: Public Business Onboarding Gateway**
+- [x] **Step 4.1: Public Business Onboarding Gateway**
   - Create a public multi-tenant creation path: `apps/web/src/app/(public)/register/workspace/page.tsx`.
   - Handle submission within a safe database context transaction: Create a unique `Tenant`, assign baseline enterprise permissions, and create the founding user account explicitly flagged as a `SuperAdmin`.
-- [ ] **Step 4.2: Cryptographic Invitation Tokens Database Model**
+- [x] **Step 4.2: Cryptographic Invitation Tokens Database Model**
   - Append an `Invitation` model tracking relation to `packages/database/prisma/schema.prisma`:
+
     ```prisma
     model Invitation {
       id        String   @id @default(uuid())
@@ -60,8 +61,10 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
       @@index([token])
     }
     ```
+
   - Re-run structural workspace synchronization commands: `npm run db:push && npm run db:generate`.
-- [ ] **Step 4.3: Secure Registration Form Lifecycle Router**
+
+- [x] **Step 4.3: Secure Registration Form Lifecycle Router**
   - Build the public landing workspace for invitation confirmation codes: `apps/web/src/app/(public)/register/invite/page.tsx`.
   - Parse the cryptographic URL search value string. If verified and within the designated `expiresAt` timeline, reveal password registration input forms and anchor the new account directly onto the pre-assigned `tenantId` scope.
 
@@ -71,8 +74,9 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
 
 **Objective:** Transition your decoupled Express microservice into a programmatic platform feature, allowing corporate tenants to securely automate workflows via machine-to-machine integrations.
 
-- [ ] **Step 5.1: Database ApiKey Token Relations**
+- [x] **Step 5.1: Database ApiKey Token Relations**
   - Append an identity access tracking model to your Prisma schema:
+
     ```prisma
     model ApiKey {
       id        String   @id @default(uuid())
@@ -84,10 +88,11 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
       @@index([key])
     }
     ```
-- [ ] **Step 5.2: Programmatic Header Verification Middleware**
+
+- [x] **Step 5.2: Programmatic Header Verification Middleware**
   - Build a secondary verification middleware layer inside your Express workspace: `apps/api/middleware/apiKeyAuth.ts`.
   - Configure route rules to scan incoming network headers for authentic token entries (`X-API-Key`). Hash the header token, match it against database records, extract the associated company identifier, and inject it into the active request thread (`req.tenantId`).
-- [ ] **Step 5.3: Core Dashboard Token Developer Console**
+- [x] **Step 5.3: Core Dashboard Token Developer Console**
   - Construct an API management interface panel inside your Next.js configuration space (`/settings?tab=developer`).
   - Implement form workflows to generate new API tokens (revealing raw key values exactly once using high-security display layers) and display existing tokens in a list view.
 
@@ -189,15 +194,15 @@ Follow these styling rules and guidelines to maintain uniform layout rendering a
 
 ### Phase 4: B2B Onboarding & Cryptographic Invite Loops
 
-- [ ] Deploy the public business registration workspace route.
-- [ ] Push the new `Invitation` data schema tables to your database client.
-- [ ] Build token-verified registration input pages to securely onboard new workspace actors.
+- [x] Deploy the public business registration workspace route.
+- [x] Push the new `Invitation` data schema tables to your database client.
+- [x] Build token-verified registration input pages to securely onboard new workspace actors.
 
 ### Phase 5: The Developer API Key Gateway
 
-- [ ] Push the `ApiKey` data models to your database container.
-- [ ] Build the Express request interceptor middleware targeting machine token configurations.
-- [ ] Render the client-facing developer credential management panel within the workspace dashboard.
+- [x] Push the `ApiKey` data models to your database container.
+- [x] Build the Express request interceptor middleware targeting machine token configurations.
+- [x] Render the client-facing developer credential management panel within the workspace dashboard.
 
 ### Phase 6: Multi-Tenant Stripe Subscription Engine
 

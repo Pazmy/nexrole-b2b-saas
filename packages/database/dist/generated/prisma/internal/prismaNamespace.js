@@ -71,7 +71,8 @@ export const ModelName = {
     Role: 'Role',
     User: 'User',
     Transaction: 'Transaction',
-    Invitation: 'Invitation'
+    Invitation: 'Invitation',
+    ApiKey: 'ApiKey'
 };
 /**
  * Enums
@@ -123,6 +124,13 @@ export const InvitationScalarFieldEnum = {
     roleId: 'roleId',
     tenantId: 'tenantId',
     expiresAt: 'expiresAt',
+    createdAt: 'createdAt'
+};
+export const ApiKeyScalarFieldEnum = {
+    id: 'id',
+    key: 'key',
+    tenantId: 'tenantId',
+    name: 'name',
     createdAt: 'createdAt'
 };
 export const SortOrder = {

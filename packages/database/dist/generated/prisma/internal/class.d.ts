@@ -172,5 +172,16 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get invitation(): Prisma.InvitationDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
+    /**
+     * `prisma.apiKey`: Exposes CRUD operations for the **ApiKey** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more ApiKeys
+      * const apiKeys = await prisma.apiKey.findMany()
+      * ```
+      */
+    get apiKey(): Prisma.ApiKeyDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
 }
 export declare function getPrismaClientClass(): PrismaClientConstructor;
