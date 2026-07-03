@@ -5,13 +5,18 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth;
   const isAuthPage = req.nextUrl.pathname.startsWith("/login");
 
+  // Define public accessibility exceptions
+  const isPublicRegisterPage =
+    req.nextUrl.pathname.startsWith("/register/workspace") ||
+    req.nextUrl.pathname.startsWith("/register/invite");
+
   // 1. If trying to access dashboard but not logged in -> Redirect to Login
-  if (!isLoggedIn && !isAuthPage) {
+  if (!isLoggedIn && !isAuthPage && !isPublicRegisterPage) {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
   // 2. If logged in but trying to access Login page -> Redirect to Dashboard
-  if (isLoggedIn && isAuthPage) {
+  if (isLoggedIn && (isAuthPage || isPublicRegisterPage)) {
     return NextResponse.redirect(new URL("/", req.nextUrl));
   }
 

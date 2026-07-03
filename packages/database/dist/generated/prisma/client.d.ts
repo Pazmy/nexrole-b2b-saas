@@ -41,3 +41,8 @@ export type User = Prisma.UserModel;
  *
  */
 export type Transaction = Prisma.TransactionModel;
+/**
+ * Model Invitation
+ *
+ */
+export type Invitation = Prisma.InvitationModel;

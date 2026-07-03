@@ -161,5 +161,16 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get transaction(): Prisma.TransactionDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
+    /**
+     * `prisma.invitation`: Exposes CRUD operations for the **Invitation** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more Invitations
+      * const invitations = await prisma.invitation.findMany()
+      * ```
+      */
+    get invitation(): Prisma.InvitationDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
 }
 export declare function getPrismaClientClass(): PrismaClientConstructor;

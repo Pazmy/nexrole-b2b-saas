@@ -87,3 +87,16 @@ model Transaction {
   @@index([tenantId, createdAt])
   @@map("transactions")
 }
+
+model Invitation {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String
+  token     String   @unique
+  roleId    String
+  tenantId  String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@map("invitations")
+}

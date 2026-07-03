@@ -11,7 +11,7 @@ export interface ProfileFormState {
 
 export async function updateTenantProfile(
   prevState: ProfileFormState | null,
-  formData: FormData
+  formData: FormData,
 ) {
   const session = await auth();
 
