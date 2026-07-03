@@ -47,8 +47,10 @@ export default function DeveloperConsole({
       const rawKey = await generateApiKey(keyName);
       setRevealedKey(rawKey);
       setKeyName("");
-    } catch (err: any) {
-      alert(err.message || "Failed to generate keys.");
+    } catch (err) {
+      alert(
+        (err as { message?: string }).message || "Failed to generate keys.",
+      );
     } finally {
       setIsPending(false);
     }
@@ -63,7 +65,8 @@ export default function DeveloperConsole({
       return;
     try {
       await revokeApiKey(id);
-    } catch (err: any) {
+    } catch (err) {
+      console.log((err as { message: string })?.message);
       alert("Failed to delete key.");
     }
   };
