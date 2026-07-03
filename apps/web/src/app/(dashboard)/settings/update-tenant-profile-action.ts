@@ -15,8 +15,8 @@ export async function updateTenantProfile(
 ) {
   const session = await auth();
 
-  const tenantId = (session?.user as { tenantId: string })?.tenantId;
-  const userRole = (session?.user as { role: string })?.role;
+  const tenantId = session?.user?.tenantId;
+  const userRole = session?.user?.role;
 
   if (!tenantId || !userRole || userRole !== "SuperAdmin") {
     return {

@@ -5,7 +5,16 @@ import { DollarSign, CreditCard, Activity, CheckCircle2 } from "lucide-react";
 
 export default async function DashboardPage() {
   const session = await auth();
-  const tenantId = (session?.user as { tenantId?: string })?.tenantId;
+  const tenantId = session?.user?.tenantId;
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!tenantId || !uuidRegex.test(tenantId)) {
+    return (
+      <div className="p-8 text-center text-red-400">
+        Error: Invalid or missing organization credentials. Please sign in again.
+      </div>
+    );
+  }
 
   // 1. Fetch Aggregated Metrics Scoped strictly to the Tenant
   const [totalTransactions, pendingCount, completedCount, totalVolume] =

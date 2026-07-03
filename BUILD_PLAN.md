@@ -2,9 +2,9 @@
 
 This serves as a detailed engineering manual, blueprint, and interactive checkpoint tracking sheet during the development phase.
 
-## Current document version: `V.1.1.0`
+## Current document version: `V.1.2.0`
 
-## Last updated: `2026-07-02`
+## Last updated: `2026-07-04`
 
 ---
 
@@ -102,14 +102,16 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
 
 **Objective:** Establish automated payment gateways to restrict enterprise workspace limits based on the company's active subscription tier.
 
-- [ ] **Step 6.1: Define Enterprise Feature Set Scopes**
-  - Create a core resource allocation map. Restrict core behaviors based on active subscription status definitions (e.g., limit accounts on the Free tier to 10 logged operations per month, while unlocking unmetered records for Pro accounts).
-- [ ] **Step 6.2: Set Up Stripe Webhook Listeners inside Express Server**
-  - Implement a dedicated webhook routing terminal endpoint within your Express microservice: `apps/api/routes/webhooks/stripe.ts`.
-  - Process signature validations from Stripe requests. Parse payment events (`customer.subscription.updated`, `invoice.payment_failed`) to update corresponding `subscriptionStatus` entries in the `Tenant` table in real time.
-- [ ] **Step 6.3: Middleware Billing Enforcement Guards**
-  - Integrate tier checks into your Next.js layout structures and edge navigation middleware.
-  - Block access and redirect corporate users straight to account billing modification views if a tenant's subscription falls into an unpaid or suspended state.
+- [x] **Step 6.1: Define Enterprise Feature Set Scopes & Upgrade Path**
+  - Create a core resource allocation map (`apps/web/src/lib/billing-guard.ts`). Restrict core behaviors based on active subscription status definitions (e.g., limit accounts on the Free tier to 10 logged operations per month, while unlocking unmetered records for Pro accounts).
+  - **Upgrade Action path (`apps/web/src/app/(dashboard)/settings/_components/ProfileForm.tsx`):** Mounted an upgrade form action when `subscriptionStatus === "free"`. The "Upgrade Workspace Account" button invokes the `startCheckoutSession` server action via `formAction` to redirect users to a Stripe hosted Checkout Session.
+- [x] **Step 6.2: Set Up Stripe Webhook Listeners inside Express Server**
+  - Implement a dedicated webhook routing terminal endpoint within your Express microservice: `apps/api/routes/webhook.ts` (API version pinned to `2026-06-24.dahlia`).
+  - Process signature validations from Stripe requests. Parse payment events (`customer.subscription.created`, `customer.subscription.updated`, `invoice.payment_failed`) to update corresponding `subscriptionStatus` entries in the `Tenant` table in real time.
+  - **Stripe Customer Mapping Implementation:** Extended the `Tenant` model schema with `stripeCustomerId`. The Stripe webhook automatically updates this mapping, and server billing actions dynamically fall back to looking up or creating Stripe customer IDs based on the user's email for seamless local development support.
+- [x] **Step 6.3: Middleware Billing Enforcement Guards & Renewal Path**
+  - Integrate tier checks into your Next.js layout structures (`apps/web/src/app/(dashboard)/layout.tsx`) utilizing `checkTenantBillingStatus`.
+  - **Delinquency Warning & Renewal Button:** If the workspace is locked (delinquent/past_due or exceeded free limits), `layout.tsx` renders a warning banner (`BillingAlertBanner`). The "Resolve Billing System" action button within this banner invokes `startCustomerPortalSession` to redirect users to Stripe's Customer Portal to renew or fix their subscription.
 
 ---
 
@@ -206,9 +208,9 @@ Follow these styling rules and guidelines to maintain uniform layout rendering a
 
 ### Phase 6: Multi-Tenant Stripe Subscription Engine
 
-- [ ] Map tier limits against application database queries and layouts.
-- [ ] Deploy validated Stripe endpoint webhook listener tunnels inside your Express app.
-- [ ] Implement system-wide middleware access guards to check corporate payment statuses.
+- [x] Map tier limits against application database queries and layouts.
+- [x] Deploy validated Stripe endpoint webhook listener tunnels inside your Express app.
+- [x] Implement system-wide middleware access guards to check corporate payment statuses.
 
 ### Phase 7: Production Infrastructure & Compliance Observability
 
