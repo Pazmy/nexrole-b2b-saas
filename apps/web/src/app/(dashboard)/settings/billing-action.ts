@@ -5,9 +5,19 @@ import Stripe from "stripe";
 import { redirect } from "next/navigation";
 import { prisma } from "@nexrole/database";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-06-24.dahlia",
-});
+let stripeInstance: Stripe | null = null;
+function getStripe() {
+  if (!stripeInstance) {
+    const apiKey = process.env.STRIPE_SECRET_KEY;
+    if (!apiKey) {
+      throw new Error("STRIPE_SECRET_KEY is not defined");
+    }
+    stripeInstance = new Stripe(apiKey, {
+      apiVersion: "2026-06-24.dahlia",
+    });
+  }
+  return stripeInstance;
+}
 
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -23,7 +33,7 @@ export async function startCheckoutSession() {
   if (!tenantId) throw new Error("Unauthorized context.");
 
   // Create a secure hosted checkout window
-  const checkoutSession = await stripe.checkout.sessions.create({
+  const checkoutSession = await getStripe().checkout.sessions.create({
     customer_email: userEmail,
     payment_method_types: ["card"],
     line_items: [
@@ -70,7 +80,7 @@ export async function startCustomerPortalSession() {
 
   // If not found in database (e.g. local development or fallback), look up/create dynamically in Stripe
   if (!customerId) {
-    const customers = await stripe.customers.list({
+    const customers = await getStripe().customers.list({
       email: userEmail,
       limit: 1,
     });
@@ -78,7 +88,7 @@ export async function startCustomerPortalSession() {
     if (customers.data.length > 0) {
       customerId = customers.data[0].id;
     } else {
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         email: userEmail,
         metadata: {
           tenantId: tenantId,
@@ -94,7 +104,7 @@ export async function startCustomerPortalSession() {
     });
   }
 
-  const portalSession = await stripe.billingPortal.sessions.create({
+  const portalSession = await getStripe().billingPortal.sessions.create({
     return_url: `${BASE_URL}/settings`,
     customer: customerId,
   });
