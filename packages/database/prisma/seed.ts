@@ -93,6 +93,41 @@ async function main() {
       status: "completed",
       description: "Enterprise Core Infrastructure Annual Renewal Contract",
     },
+    {
+      amount: 1000.0,
+      status: "pending",
+      description: "Annual subscription renewal",
+    },
+    {
+      amount: 2000.0,
+      status: "completed",
+      description: "Enterprise Core Infrastructure Annual Renewal Contract",
+    },
+    {
+      amount: 9600.0,
+      status: "completed",
+      description: "Enterprise Core Infrastructure Annual Renewal Contract",
+    },
+    {
+      amount: 120.0,
+      status: "failed",
+      description: "Automated Credit Card Clearing Retry System",
+    },
+    {
+      amount: 3200.0,
+      status: "completed",
+      description: "B2B Custom Integration Advisory Services",
+    },
+    {
+      amount: 4400.0,
+      status: "pending",
+      description: "Cloud Infrastructure Compute Overage Metering",
+    },
+    {
+      amount: 120.0,
+      status: "failed",
+      description: "Automated Credit Card Clearing Retry System",
+    },
   ];
 
   console.log(

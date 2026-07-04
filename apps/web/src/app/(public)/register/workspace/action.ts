@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@nexrole/database";
+import { SUBSCRIPTION_STATUS } from "@/lib/constants";
 import bcryptjs from "bcryptjs";
 
 export async function registerWorkSpace(
@@ -47,7 +48,7 @@ export async function registerWorkSpace(
       const newTenant = await tx.tenant.create({
         data: {
           name: companyName.trim(),
-          subscriptionStatus: "active", // Default onboarding state
+          subscriptionStatus: SUBSCRIPTION_STATUS.FREE, // Default onboarding state
         },
       });
 

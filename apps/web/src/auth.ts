@@ -45,18 +45,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     // Add Tenant ID and Role to the JWT token so the frontend can use it
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as { role: string }).role;
-        token.tenantId = (user as { tenantId: string }).tenantId;
+        token.role = user.role;
+        token.tenantId = user.tenantId;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as unknown as { role: string; tenantId: string }).role =
-          token.role as string;
-        (
-          session.user as unknown as { role: string; tenantId: string }
-        ).tenantId = token.tenantId as string;
+        session.user.role = token.role;
+        session.user.tenantId = token.tenantId;
       }
       return session;
     },

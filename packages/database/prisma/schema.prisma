@@ -17,7 +17,8 @@ datasource db {
 model Tenant {
   id                 String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name               String
-  subscriptionStatus String        @default("active") // active, past_due, canceled
+  subscriptionStatus String        @default("free") // active, past_due, canceled, free
+  stripeCustomerId   String?       @unique // Stripe customer mapping
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 

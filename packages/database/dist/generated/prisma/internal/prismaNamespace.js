@@ -87,6 +87,7 @@ export const TenantScalarFieldEnum = {
     id: 'id',
     name: 'name',
     subscriptionStatus: 'subscriptionStatus',
+    stripeCustomerId: 'stripeCustomerId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };
@@ -143,6 +144,10 @@ export const JsonNullValueInput = {
 export const QueryMode = {
     default: 'default',
     insensitive: 'insensitive'
+};
+export const NullsOrder = {
+    first: 'first',
+    last: 'last'
 };
 export const JsonNullValueFilter = {
     DbNull: DbNull,

@@ -1,8 +1,9 @@
 "use client";
 import { useActionState } from "react";
 import { updateTenantProfile } from "../update-tenant-profile-action";
+import { startCheckoutSession } from "../billing-action";
 import { KeyRound, Shield, Loader2 } from "lucide-react";
-import { ROLE } from "@/lib/constants";
+import { ROLE, SUBSCRIPTION_STATUS } from "@/lib/constants";
 interface Tenant {
   name: string;
   subscriptionStatus: string;
@@ -42,6 +43,23 @@ export default function ProfileForm({
           {tenant?.subscriptionStatus.toUpperCase() || "FREE"}
         </div>
       </div>
+
+      {tenant?.subscriptionStatus === SUBSCRIPTION_STATUS.FREE && (
+        <div className="border-t border-zinc-800 pt-4 mt-4">
+          <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wide">
+            Unlock Enterprise Pro
+          </h4>
+          <p className="text-xs text-zinc-500 mt-1 mb-3">
+            Remove operational limits and gain unlimited ledger access logs.
+          </p>
+          <button
+            formAction={startCheckoutSession} // Executes our upgrade checkout session action!
+            className="h-9 px-4 rounded-md bg-emerald-600 hover:bg-emerald-700 text-xs font-medium text-white transition-colors"
+          >
+            Upgrade Workspace Account
+          </button>
+        </div>
+      )}
       {/* Company Legal Name */}
       <div className="space-y-2">
         <label

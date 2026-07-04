@@ -4,11 +4,14 @@ import dotenv from "dotenv";
 import { prisma } from "@nexrole/database";
 import { authTenant } from "./middleware.js";
 import { apiKeyAuth } from "./middleware/apiKeyAuth.js";
+import { webhookRouter } from "./routes/webhook.js";
 
 dotenv.config({ path: "../../.env" });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+app.use("/api/webhooks", webhookRouter);
 
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());

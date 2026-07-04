@@ -8,6 +8,9 @@ import {
   Building2,
 } from "lucide-react";
 import Link from "next/link";
+import { checkTenantBillingStatus } from "@/lib/billing-guard";
+import BillingAlertBanner from "@/components/billing-alert-banner";
+import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
   children,
@@ -15,9 +18,15 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const session = await auth();
-  const tenantName = session?.user?.name || "My Company";
-  const userEmail = session?.user?.email;
-  const userRole = (session?.user as { role?: string })?.role || "Member";
+
+  if (!session?.user?.tenantId) {
+    redirect("/login");
+  }
+
+  const tenantName = session.user.name || "My Company";
+  const userEmail = session.user.email;
+  const userRole = session.user.role || "Member";
+  const billingCheck = await checkTenantBillingStatus(session.user.tenantId);
 
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-white overflow-hidden">
@@ -95,7 +104,17 @@ export default async function DashboardLayout({
             B2B Management Console
           </h2>
         </header>
-        <div className="p-8 flex-1">{children}</div>
+        <div className="p-8 flex-1">
+          {billingCheck.isLocked && billingCheck.reason !== "none" && (
+            <BillingAlertBanner
+              reason={billingCheck.reason}
+              tier={billingCheck.tier}
+              usage={billingCheck.currentUsage}
+              max={billingCheck.maxUsage}
+            />
+          )}
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -20,8 +20,17 @@ enum Tabs {
 
 export default async function SettingsPage({ searchParams }: PageProps) {
   const session = await auth();
-  const tenantId = (session?.user as { tenantId?: string })?.tenantId;
-  const userRole = (session?.user as { role?: string })?.role;
+  const tenantId = session?.user?.tenantId;
+  const userRole = session?.user?.role;
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!tenantId || !uuidRegex.test(tenantId)) {
+    return (
+      <div className="p-8 text-center text-red-400">
+        Error: Invalid or missing organization credentials. Please sign in again.
+      </div>
+    );
+  }
 
   const resolvedParams = await searchParams;
   const activeTab = resolvedParams.tab || Tabs.Profile;
