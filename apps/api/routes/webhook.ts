@@ -14,25 +14,32 @@ interface StripeInvoiceWithSubscriptionDetails extends Stripe.Invoice {
   };
 }
 
-// Initialize Stripe with your private secret key (ensure this lives in your root .env)
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "mock_key_for_dev", {
-  apiVersion: "2026-06-24.dahlia",
-});
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+let stripeInstance: Stripe | null = null;
+function getStripe() {
+  if (!stripeInstance) {
+    stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY || "mock_key_for_dev", {
+      apiVersion: "2026-06-24.dahlia",
+    });
+  }
+  return stripeInstance;
+}
 
 router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"];
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event: Stripe.Event;
 
   try {
+    console.log("Webhook received. stripe-signature header:", sig);
+    console.log("endpointSecret is set:", !!endpointSecret);
     if (!sig || !endpointSecret) {
       throw new Error(
-        "Missing stripe-signature header or webhook endpoint verification token.",
+        `Missing stripe-signature header or webhook endpoint verification token. (sig: ${!!sig}, secret: ${!!endpointSecret})`,
       );
     }
     // Cryptographically verify that the event payload came genuinely from Stripe
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);

@@ -1,12 +1,40 @@
+import dotenv from "dotenv";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+
+// ***** Handle Scope Issues with .env files
+const __filename = fileURLToPath(import.meta.url);
+let currentDir = path.dirname(__filename);
+
+// console.log("[Dotenv Debug] __filename:", __filename);
+let envPath = "";
+while (currentDir !== path.parse(currentDir).root) {
+  const checkPath = path.join(currentDir, ".env");
+  if (fs.existsSync(checkPath)) {
+    envPath = checkPath;
+    break;
+  }
+  currentDir = path.dirname(currentDir);
+}
+// console.log("[Dotenv Debug] Resolved envPath:", envPath);
+
+if (envPath) {
+  const result = dotenv.config({ path: envPath });
+  // console.log("[Dotenv Debug] dotenv config result:", result.error ? "Error: " + result.error.message : "Success");
+} else {
+  // console.log("[Dotenv Debug] envPath not found, running default dotenv.config()");
+  dotenv.config();
+}
+// console.log("[Dotenv Debug] STRIPE_WEBHOOK_SECRET loaded:", process.env.STRIPE_WEBHOOK_SECRET ? "YES (starts with " + process.env.STRIPE_WEBHOOK_SECRET.substring(0, 10) + "...)" : "NO");
+// *****END******
+
 import express, { Request, Response } from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import { prisma } from "@nexrole/database";
 import { authTenant } from "./middleware.js";
 import { apiKeyAuth } from "./middleware/apiKeyAuth.js";
 import { webhookRouter } from "./routes/webhook.js";
-
-dotenv.config({ path: "../../.env" });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
