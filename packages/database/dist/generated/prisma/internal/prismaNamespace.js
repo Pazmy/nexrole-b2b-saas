@@ -72,7 +72,8 @@ export const ModelName = {
     User: 'User',
     Transaction: 'Transaction',
     Invitation: 'Invitation',
-    ApiKey: 'ApiKey'
+    ApiKey: 'ApiKey',
+    AuditLog: 'AuditLog'
 };
 /**
  * Enums
@@ -134,11 +135,26 @@ export const ApiKeyScalarFieldEnum = {
     name: 'name',
     createdAt: 'createdAt'
 };
+export const AuditLogScalarFieldEnum = {
+    id: 'id',
+    action: 'action',
+    actorId: 'actorId',
+    actorEmail: 'actorEmail',
+    tenantId: 'tenantId',
+    ipAddress: 'ipAddress',
+    userAgent: 'userAgent',
+    metadata: 'metadata',
+    createdAt: 'createdAt'
+};
 export const SortOrder = {
     asc: 'asc',
     desc: 'desc'
 };
 export const JsonNullValueInput = {
+    JsonNull: JsonNull
+};
+export const NullableJsonNullValueInput = {
+    DbNull: DbNull,
     JsonNull: JsonNull
 };
 export const QueryMode = {

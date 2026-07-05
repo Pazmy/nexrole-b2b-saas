@@ -149,6 +149,7 @@ export type TenantWhereInput = {
     users?: Prisma.UserListRelationFilter;
     transactions?: Prisma.TransactionListRelationFilter;
     apiKeys?: Prisma.ApiKeyListRelationFilter;
+    auditLogs?: Prisma.AuditLogListRelationFilter;
 };
 export type TenantOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
@@ -160,6 +161,7 @@ export type TenantOrderByWithRelationInput = {
     users?: Prisma.UserOrderByRelationAggregateInput;
     transactions?: Prisma.TransactionOrderByRelationAggregateInput;
     apiKeys?: Prisma.ApiKeyOrderByRelationAggregateInput;
+    auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput;
 };
 export type TenantWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
@@ -174,6 +176,7 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
     users?: Prisma.UserListRelationFilter;
     transactions?: Prisma.TransactionListRelationFilter;
     apiKeys?: Prisma.ApiKeyListRelationFilter;
+    auditLogs?: Prisma.AuditLogListRelationFilter;
 }, "id" | "stripeCustomerId">;
 export type TenantOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
@@ -207,6 +210,7 @@ export type TenantCreateInput = {
     users?: Prisma.UserCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput;
 };
 export type TenantUncheckedCreateInput = {
     id?: string;
@@ -218,6 +222,7 @@ export type TenantUncheckedCreateInput = {
     users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput;
 };
 export type TenantUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -229,6 +234,7 @@ export type TenantUpdateInput = {
     users?: Prisma.UserUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput;
 };
 export type TenantUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -240,6 +246,7 @@ export type TenantUncheckedUpdateInput = {
     users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput;
 };
 export type TenantCreateManyInput = {
     id?: string;
@@ -338,6 +345,18 @@ export type TenantUpdateOneRequiredWithoutApiKeysNestedInput = {
     connect?: Prisma.TenantWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutApiKeysInput, Prisma.TenantUpdateWithoutApiKeysInput>, Prisma.TenantUncheckedUpdateWithoutApiKeysInput>;
 };
+export type TenantCreateNestedOneWithoutAuditLogsInput = {
+    create?: Prisma.XOR<Prisma.TenantCreateWithoutAuditLogsInput, Prisma.TenantUncheckedCreateWithoutAuditLogsInput>;
+    connectOrCreate?: Prisma.TenantCreateOrConnectWithoutAuditLogsInput;
+    connect?: Prisma.TenantWhereUniqueInput;
+};
+export type TenantUpdateOneRequiredWithoutAuditLogsNestedInput = {
+    create?: Prisma.XOR<Prisma.TenantCreateWithoutAuditLogsInput, Prisma.TenantUncheckedCreateWithoutAuditLogsInput>;
+    connectOrCreate?: Prisma.TenantCreateOrConnectWithoutAuditLogsInput;
+    upsert?: Prisma.TenantUpsertWithoutAuditLogsInput;
+    connect?: Prisma.TenantWhereUniqueInput;
+    update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutAuditLogsInput, Prisma.TenantUpdateWithoutAuditLogsInput>, Prisma.TenantUncheckedUpdateWithoutAuditLogsInput>;
+};
 export type TenantCreateWithoutUsersInput = {
     id?: string;
     name: string;
@@ -347,6 +366,7 @@ export type TenantCreateWithoutUsersInput = {
     updatedAt?: Date | string;
     transactions?: Prisma.TransactionCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput;
 };
 export type TenantUncheckedCreateWithoutUsersInput = {
     id?: string;
@@ -357,6 +377,7 @@ export type TenantUncheckedCreateWithoutUsersInput = {
     updatedAt?: Date | string;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput;
 };
 export type TenantCreateOrConnectWithoutUsersInput = {
     where: Prisma.TenantWhereUniqueInput;
@@ -380,6 +401,7 @@ export type TenantUpdateWithoutUsersInput = {
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     transactions?: Prisma.TransactionUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput;
 };
 export type TenantUncheckedUpdateWithoutUsersInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -390,6 +412,7 @@ export type TenantUncheckedUpdateWithoutUsersInput = {
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput;
 };
 export type TenantCreateWithoutTransactionsInput = {
     id?: string;
@@ -400,6 +423,7 @@ export type TenantCreateWithoutTransactionsInput = {
     updatedAt?: Date | string;
     users?: Prisma.UserCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput;
 };
 export type TenantUncheckedCreateWithoutTransactionsInput = {
     id?: string;
@@ -410,6 +434,7 @@ export type TenantUncheckedCreateWithoutTransactionsInput = {
     updatedAt?: Date | string;
     users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput;
 };
 export type TenantCreateOrConnectWithoutTransactionsInput = {
     where: Prisma.TenantWhereUniqueInput;
@@ -433,6 +458,7 @@ export type TenantUpdateWithoutTransactionsInput = {
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput;
 };
 export type TenantUncheckedUpdateWithoutTransactionsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -443,6 +469,7 @@ export type TenantUncheckedUpdateWithoutTransactionsInput = {
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput;
 };
 export type TenantCreateWithoutApiKeysInput = {
     id?: string;
@@ -453,6 +480,7 @@ export type TenantCreateWithoutApiKeysInput = {
     updatedAt?: Date | string;
     users?: Prisma.UserCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput;
 };
 export type TenantUncheckedCreateWithoutApiKeysInput = {
     id?: string;
@@ -463,6 +491,7 @@ export type TenantUncheckedCreateWithoutApiKeysInput = {
     updatedAt?: Date | string;
     users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput;
 };
 export type TenantCreateOrConnectWithoutApiKeysInput = {
     where: Prisma.TenantWhereUniqueInput;
@@ -486,6 +515,7 @@ export type TenantUpdateWithoutApiKeysInput = {
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput;
 };
 export type TenantUncheckedUpdateWithoutApiKeysInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
@@ -496,6 +526,64 @@ export type TenantUncheckedUpdateWithoutApiKeysInput = {
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput;
+};
+export type TenantCreateWithoutAuditLogsInput = {
+    id?: string;
+    name: string;
+    subscriptionStatus?: string;
+    stripeCustomerId?: string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    users?: Prisma.UserCreateNestedManyWithoutTenantInput;
+    transactions?: Prisma.TransactionCreateNestedManyWithoutTenantInput;
+    apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutTenantInput;
+};
+export type TenantUncheckedCreateWithoutAuditLogsInput = {
+    id?: string;
+    name: string;
+    subscriptionStatus?: string;
+    stripeCustomerId?: string | null;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput;
+    transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutTenantInput;
+    apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutTenantInput;
+};
+export type TenantCreateOrConnectWithoutAuditLogsInput = {
+    where: Prisma.TenantWhereUniqueInput;
+    create: Prisma.XOR<Prisma.TenantCreateWithoutAuditLogsInput, Prisma.TenantUncheckedCreateWithoutAuditLogsInput>;
+};
+export type TenantUpsertWithoutAuditLogsInput = {
+    update: Prisma.XOR<Prisma.TenantUpdateWithoutAuditLogsInput, Prisma.TenantUncheckedUpdateWithoutAuditLogsInput>;
+    create: Prisma.XOR<Prisma.TenantCreateWithoutAuditLogsInput, Prisma.TenantUncheckedCreateWithoutAuditLogsInput>;
+    where?: Prisma.TenantWhereInput;
+};
+export type TenantUpdateToOneWithWhereWithoutAuditLogsInput = {
+    where?: Prisma.TenantWhereInput;
+    data: Prisma.XOR<Prisma.TenantUpdateWithoutAuditLogsInput, Prisma.TenantUncheckedUpdateWithoutAuditLogsInput>;
+};
+export type TenantUpdateWithoutAuditLogsInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    name?: Prisma.StringFieldUpdateOperationsInput | string;
+    subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    users?: Prisma.UserUpdateManyWithoutTenantNestedInput;
+    transactions?: Prisma.TransactionUpdateManyWithoutTenantNestedInput;
+    apiKeys?: Prisma.ApiKeyUpdateManyWithoutTenantNestedInput;
+};
+export type TenantUncheckedUpdateWithoutAuditLogsInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    name?: Prisma.StringFieldUpdateOperationsInput | string;
+    subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput;
+    transactions?: Prisma.TransactionUncheckedUpdateManyWithoutTenantNestedInput;
+    apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutTenantNestedInput;
 };
 /**
  * Count Type TenantCountOutputType
@@ -504,11 +592,13 @@ export type TenantCountOutputType = {
     users: number;
     transactions: number;
     apiKeys: number;
+    auditLogs: number;
 };
 export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     users?: boolean | TenantCountOutputTypeCountUsersArgs;
     transactions?: boolean | TenantCountOutputTypeCountTransactionsArgs;
     apiKeys?: boolean | TenantCountOutputTypeCountApiKeysArgs;
+    auditLogs?: boolean | TenantCountOutputTypeCountAuditLogsArgs;
 };
 /**
  * TenantCountOutputType without action
@@ -537,6 +627,12 @@ export type TenantCountOutputTypeCountTransactionsArgs<ExtArgs extends runtime.T
 export type TenantCountOutputTypeCountApiKeysArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.ApiKeyWhereInput;
 };
+/**
+ * TenantCountOutputType without action
+ */
+export type TenantCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.AuditLogWhereInput;
+};
 export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     name?: boolean;
@@ -547,6 +643,7 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     users?: boolean | Prisma.Tenant$usersArgs<ExtArgs>;
     transactions?: boolean | Prisma.Tenant$transactionsArgs<ExtArgs>;
     apiKeys?: boolean | Prisma.Tenant$apiKeysArgs<ExtArgs>;
+    auditLogs?: boolean | Prisma.Tenant$auditLogsArgs<ExtArgs>;
     _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["tenant"]>;
 export type TenantSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -578,6 +675,7 @@ export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     users?: boolean | Prisma.Tenant$usersArgs<ExtArgs>;
     transactions?: boolean | Prisma.Tenant$transactionsArgs<ExtArgs>;
     apiKeys?: boolean | Prisma.Tenant$apiKeysArgs<ExtArgs>;
+    auditLogs?: boolean | Prisma.Tenant$auditLogsArgs<ExtArgs>;
     _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type TenantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {};
@@ -588,6 +686,7 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
         users: Prisma.$UserPayload<ExtArgs>[];
         transactions: Prisma.$TransactionPayload<ExtArgs>[];
         apiKeys: Prisma.$ApiKeyPayload<ExtArgs>[];
+        auditLogs: Prisma.$AuditLogPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
@@ -928,6 +1027,7 @@ export interface Prisma__TenantClient<T, Null = never, ExtArgs extends runtime.T
     users<T extends Prisma.Tenant$usersArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$usersArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     transactions<T extends Prisma.Tenant$transactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     apiKeys<T extends Prisma.Tenant$apiKeysArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$apiKeysArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ApiKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    auditLogs<T extends Prisma.Tenant$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1402,6 +1502,29 @@ export type Tenant$apiKeysArgs<ExtArgs extends runtime.Types.Extensions.Internal
     take?: number;
     skip?: number;
     distinct?: Prisma.ApiKeyScalarFieldEnum | Prisma.ApiKeyScalarFieldEnum[];
+};
+/**
+ * Tenant.auditLogs
+ */
+export type Tenant$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditLog
+     */
+    select?: Prisma.AuditLogSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the AuditLog
+     */
+    omit?: Prisma.AuditLogOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.AuditLogInclude<ExtArgs> | null;
+    where?: Prisma.AuditLogWhereInput;
+    orderBy?: Prisma.AuditLogOrderByWithRelationInput | Prisma.AuditLogOrderByWithRelationInput[];
+    cursor?: Prisma.AuditLogWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[];
 };
 /**
  * Tenant without action

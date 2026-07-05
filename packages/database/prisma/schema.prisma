@@ -25,6 +25,7 @@ model Tenant {
   users              User[]
   transactions       Transaction[]
   apiKeys            ApiKey[]
+  auditLogs          AuditLog[]
 
   @@map("tenants")
 }
@@ -113,4 +114,21 @@ model ApiKey {
 
   @@index([key])
   @@map("apiKeys")
+}
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action     String   // e.g., "TENANT_PROFILE_UPDATED", "MEMBER_INVITED", etc.
+  actorId    String?  @db.Uuid
+  actorEmail String?
+  tenantId   String   @db.Uuid
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  ipAddress  String?
+  userAgent  String?
+  metadata   Json?    // Stores parameters, before/after diffs, etc.
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

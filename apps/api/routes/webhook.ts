@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { prisma } from "@nexrole/database";
 import { rawBodyParser } from "../middleware/rawBody.js";
 import { SUBSCRIPTION_STATUS } from "../constants.js";
+import { getContextLogger } from "../middleware/loggerMiddleware.js";
 
 const router = Router();
 
@@ -31,8 +32,7 @@ router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
   let event: Stripe.Event;
 
   try {
-    console.log("Webhook received. stripe-signature header:", sig);
-    console.log("endpointSecret is set:", !!endpointSecret);
+    getContextLogger().info("Webhook received. stripe-signature header verification initiated.");
     if (!sig || !endpointSecret) {
       throw new Error(
         `Missing stripe-signature header or webhook endpoint verification token. (sig: ${!!sig}, secret: ${!!endpointSecret})`,
@@ -43,8 +43,9 @@ router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
-    console.error(
-      `⚠️ Webhook signature authorization check failed: ${errorMessage}`,
+    getContextLogger().error(
+      { err },
+      `⚠️ Webhook signature authorization check failed: ${errorMessage}`
     );
     res.status(400).send(`Webhook Error: ${errorMessage}`);
     return;
@@ -62,15 +63,29 @@ router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
         const stripeCustomerId = subscription.customer as string;
 
         if (tenantId) {
-          await prisma.tenant.update({
-            where: { id: tenantId },
-            data: { 
-              subscriptionStatus: status,
-              stripeCustomerId: stripeCustomerId,
-            },
-          });
-          console.log(
-            `💳 Tenant [${tenantId}] billing subscription state updated to: ${status.toUpperCase()} (Customer: ${stripeCustomerId})`,
+          await prisma.$transaction([
+            prisma.tenant.update({
+              where: { id: tenantId },
+              data: { 
+                subscriptionStatus: status,
+                stripeCustomerId: stripeCustomerId,
+              },
+            }),
+            prisma.auditLog.create({
+              data: {
+                action: "TENANT_SUBSCRIPTION_UPDATED",
+                tenantId: tenantId,
+                metadata: {
+                  event: event.type,
+                  subscriptionStatus: status,
+                  stripeCustomerId: stripeCustomerId,
+                },
+              },
+            }),
+          ]);
+
+          getContextLogger().info(
+            `💳 Tenant [${tenantId}] billing subscription state updated to: ${status.toUpperCase()} (Customer: ${stripeCustomerId})`
           );
         }
         break;
@@ -83,26 +98,40 @@ router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
 
         if (tenantId) {
           // Instantly lock account mutations by flag switching to 'past_due'
-          await prisma.tenant.update({
-            where: { id: tenantId },
-            data: { subscriptionStatus: SUBSCRIPTION_STATUS.PAST_DUE },
-          });
-          console.warn(
-            `🚨 Payment collection failed for Tenant [${tenantId}]. Flagged as PAST_DUE.`,
+          await prisma.$transaction([
+            prisma.tenant.update({
+              where: { id: tenantId },
+              data: { subscriptionStatus: SUBSCRIPTION_STATUS.PAST_DUE },
+            }),
+            prisma.auditLog.create({
+              data: {
+                action: "TENANT_SUBSCRIPTION_PAYMENT_FAILED",
+                tenantId: tenantId,
+                metadata: {
+                  event: event.type,
+                  subscriptionStatus: SUBSCRIPTION_STATUS.PAST_DUE,
+                  invoiceId: invoice.id,
+                },
+              },
+            }),
+          ]);
+
+          getContextLogger().warn(
+            `🚨 Payment collection failed for Tenant [${tenantId}]. Flagged as PAST_DUE.`
           );
         }
         break;
       }
 
       default:
-        console.log(`ℹ️ Unhandled Stripe hook event type: ${event.type}`);
+        getContextLogger().info(`ℹ️ Unhandled Stripe hook event type: ${event.type}`);
     }
 
     res.status(200).json({ received: true });
   } catch (dbError) {
-    console.error(
-      "Database sync execution fault during stripe processing:",
-      dbError,
+    getContextLogger().error(
+      { err: dbError },
+      "Database sync execution fault during stripe processing"
     );
     res
       .status(500)

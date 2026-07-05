@@ -237,6 +237,7 @@ export declare const ModelName: {
     readonly Transaction: "Transaction";
     readonly Invitation: "Invitation";
     readonly ApiKey: "ApiKey";
+    readonly AuditLog: "AuditLog";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export interface TypeMapCb<GlobalOmitOptions = {}> extends runtime.Types.Utils.Fn<{
@@ -249,7 +250,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "tenant" | "role" | "user" | "transaction" | "invitation" | "apiKey";
+        modelProps: "tenant" | "role" | "user" | "transaction" | "invitation" | "apiKey" | "auditLog";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -697,6 +698,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 };
             };
         };
+        AuditLog: {
+            payload: Prisma.$AuditLogPayload<ExtArgs>;
+            fields: Prisma.AuditLogFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.AuditLogFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.AuditLogFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>;
+                };
+                findFirst: {
+                    args: Prisma.AuditLogFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.AuditLogFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>;
+                };
+                findMany: {
+                    args: Prisma.AuditLogFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>[];
+                };
+                create: {
+                    args: Prisma.AuditLogCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>;
+                };
+                createMany: {
+                    args: Prisma.AuditLogCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.AuditLogCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>[];
+                };
+                delete: {
+                    args: Prisma.AuditLogDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>;
+                };
+                update: {
+                    args: Prisma.AuditLogUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.AuditLogDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.AuditLogUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.AuditLogUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>[];
+                };
+                upsert: {
+                    args: Prisma.AuditLogUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuditLogPayload>;
+                };
+                aggregate: {
+                    args: Prisma.AuditLogAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateAuditLog>;
+                };
+                groupBy: {
+                    args: Prisma.AuditLogGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AuditLogGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.AuditLogCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AuditLogCountAggregateOutputType> | number;
+                };
+            };
+        };
     };
 } & {
     other: {
@@ -788,6 +863,18 @@ export declare const ApiKeyScalarFieldEnum: {
     readonly createdAt: "createdAt";
 };
 export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof ApiKeyScalarFieldEnum];
+export declare const AuditLogScalarFieldEnum: {
+    readonly id: "id";
+    readonly action: "action";
+    readonly actorId: "actorId";
+    readonly actorEmail: "actorEmail";
+    readonly tenantId: "tenantId";
+    readonly ipAddress: "ipAddress";
+    readonly userAgent: "userAgent";
+    readonly metadata: "metadata";
+    readonly createdAt: "createdAt";
+};
+export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum];
 export declare const SortOrder: {
     readonly asc: "asc";
     readonly desc: "desc";
@@ -797,6 +884,11 @@ export declare const JsonNullValueInput: {
     readonly JsonNull: runtime.JsonNullClass;
 };
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput];
+export declare const NullableJsonNullValueInput: {
+    readonly DbNull: runtime.DbNullClass;
+    readonly JsonNull: runtime.JsonNullClass;
+};
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput];
 export declare const QueryMode: {
     readonly default: "default";
     readonly insensitive: "insensitive";
@@ -975,6 +1067,7 @@ export type GlobalOmitConfig = {
     transaction?: Prisma.TransactionOmit;
     invitation?: Prisma.InvitationOmit;
     apiKey?: Prisma.ApiKeyOmit;
+    auditLog?: Prisma.AuditLogOmit;
 };
 export type LogLevel = 'info' | 'query' | 'warn' | 'error';
 export type LogDefinition = {

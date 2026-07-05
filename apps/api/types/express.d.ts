@@ -6,6 +6,7 @@ declare global {
       tenantId?: string;
       userRole?: string;
       userEmail?: string;
+      correlationId?: string;
     }
   }
 }
