@@ -35,6 +35,7 @@ import { prisma } from "@nexrole/database";
 import { authTenant } from "./middleware.js";
 import { apiKeyAuth } from "./middleware/apiKeyAuth.js";
 import { webhookRouter } from "./routes/webhook.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -116,6 +117,42 @@ app.get(
   },
 );
 
-app.listen(PORT, () => {
+// Global Error Handler Middleware (must be registered after all route definitions)
+app.use(errorHandler);
+
+const server = app.listen(PORT, () => {
   console.log(`🚀 API Server running on http://localhost:${PORT}`);
 });
+
+// Graceful shutdown handler
+const shutdown = async (signal: string) => {
+  console.log(`\n[${signal}] Received. Starting graceful shutdown sequence...`);
+
+  // Stop accepting new connections
+  server.close(async (err) => {
+    if (err) {
+      console.error("Error closing server:", err);
+      process.exit(1);
+    }
+    console.log("HTTP server closed. No longer accepting new connections.");
+
+    try {
+      // Disconnect database client
+      await prisma.$disconnect();
+      console.log("Database connection pool closed successfully.");
+      process.exit(0);
+    } catch (dbErr) {
+      console.error("Error disconnecting database client:", dbErr);
+      process.exit(1);
+    }
+  });
+
+  // Force close after 10s timeout to prevent hanging forever
+  setTimeout(() => {
+    console.error("Forcing shutdown after timeout expired.");
+    process.exit(1);
+  }, 10000);
+};
+
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
