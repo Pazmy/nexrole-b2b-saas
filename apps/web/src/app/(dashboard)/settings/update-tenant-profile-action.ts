@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@nexrole/database";
 import { revalidatePath } from "next/cache";
+import { writeAuditLog } from "@/lib/audit";
 
 export interface ProfileFormState {
   error?: string | null;
@@ -32,9 +33,19 @@ export async function updateTenantProfile(
   }
 
   try {
+    const oldTenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { name: true },
+    });
+
     await prisma.tenant.update({
       where: { id: tenantId },
       data: { name: name.trim() },
+    });
+
+    await writeAuditLog("TENANT_PROFILE_UPDATED", {
+      before: oldTenant?.name || "",
+      after: name.trim(),
     });
 
     revalidatePath("/settings");

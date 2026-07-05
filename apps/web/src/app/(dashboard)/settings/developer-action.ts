@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@nexrole/database";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
+import { writeAuditLog } from "@/lib/audit";
 
 // 1. Generate a brand new token profile securely
 export async function generateApiKey(name: string) {
@@ -29,12 +30,17 @@ export async function generateApiKey(name: string) {
     .update(publicRawApiKey)
     .digest("hex");
 
-  await prisma.apiKey.create({
+  const newKey = await prisma.apiKey.create({
     data: {
       name: name.trim(),
       key: secureDbHash,
       tenantId: tenantId,
     },
+  });
+
+  await writeAuditLog("DEVELOPER_API_KEY_GENERATED", {
+    keyId: newKey.id,
+    keyName: name.trim(),
   });
 
   revalidatePath("/settings");
@@ -53,12 +59,25 @@ export async function revokeApiKey(keyId: string) {
     throw new Error("Unauthorized access.");
   }
 
-  await prisma.apiKey.delete({
+  const keyRecord = await prisma.apiKey.findFirst({
     where: {
       id: keyId,
-      tenantId: tenantId, // Strict multi-tenant deletion boundary check
+      tenantId: tenantId,
     },
   });
+
+  if (keyRecord) {
+    await prisma.apiKey.delete({
+      where: {
+        id: keyId,
+      },
+    });
+
+    await writeAuditLog("DEVELOPER_API_KEY_REVOKED", {
+      keyId: keyId,
+      keyName: keyRecord.name,
+    });
+  }
 
   revalidatePath("/settings");
 }

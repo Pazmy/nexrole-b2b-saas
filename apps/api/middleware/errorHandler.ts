@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { getContextLogger } from "./loggerMiddleware.js";
 
 export function errorHandler(
   err: any,
@@ -6,8 +7,10 @@ export function errorHandler(
   res: Response,
   next: NextFunction
 ) {
-  // 1. Server-side detailed logging
-  console.error("[Global Error Handler] Caught exception:", err);
+  const contextLogger = getContextLogger();
+
+  // 1. Server-side detailed logging using contextLogger
+  contextLogger.error({ err }, "[Global Error Handler] Caught exception");
 
   // 2. Determine response status code
   const statusCode = err.status || err.statusCode || 500;

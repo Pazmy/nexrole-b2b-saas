@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@nexrole/database";
 import crypto from "crypto";
+import { writeAuditLog } from "@/lib/audit";
 
 export async function createMemberInvitation(
   email: string,
@@ -36,6 +37,12 @@ export async function createMemberInvitation(
       tenantId: tenantId,
       expiresAt: expirationWindow,
     },
+  });
+
+  await writeAuditLog("MEMBER_INVITED", {
+    invitedEmail: email.trim().toLowerCase(),
+    roleAssigned: roleName,
+    expiresAt: expirationWindow,
   });
 
   // NOTE: In production, this token is sent via email. For development testing, return the URL link.

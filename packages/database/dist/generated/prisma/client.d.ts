@@ -51,3 +51,8 @@ export type Invitation = Prisma.InvitationModel;
  *
  */
 export type ApiKey = Prisma.ApiKeyModel;
+/**
+ * Model AuditLog
+ *
+ */
+export type AuditLog = Prisma.AuditLogModel;
