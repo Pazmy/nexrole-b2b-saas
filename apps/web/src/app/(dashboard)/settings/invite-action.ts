@@ -42,7 +42,7 @@ export async function createMemberInvitation(
   await writeAuditLog("MEMBER_INVITED", {
     invitedEmail: email.trim().toLowerCase(),
     roleAssigned: roleName,
-    expiresAt: expirationWindow,
+    expiresAt: expirationWindow.toISOString(),
   });
 
   // NOTE: In production, this token is sent via email. For development testing, return the URL link.

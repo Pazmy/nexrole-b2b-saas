@@ -2,7 +2,9 @@ import { auth } from "@/auth";
 import { prisma } from "@nexrole/database";
 import { headers } from "next/headers";
 
-export async function writeAuditLog(action: string, metadata?: any) {
+type PrismaJsonValue = string | number | boolean | null | Date | { [key: string]: PrismaJsonValue } | PrismaJsonValue[];
+
+export async function writeAuditLog(action: string, metadata?: Record<string, PrismaJsonValue>) {
   try {
     const session = await auth();
     const tenantId = session?.user?.tenantId;
