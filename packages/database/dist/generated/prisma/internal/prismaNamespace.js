@@ -73,7 +73,8 @@ export const ModelName = {
     Transaction: 'Transaction',
     Invitation: 'Invitation',
     ApiKey: 'ApiKey',
-    AuditLog: 'AuditLog'
+    AuditLog: 'AuditLog',
+    ProcessedStripeEvent: 'ProcessedStripeEvent'
 };
 /**
  * Enums
@@ -144,6 +145,10 @@ export const AuditLogScalarFieldEnum = {
     ipAddress: 'ipAddress',
     userAgent: 'userAgent',
     metadata: 'metadata',
+    createdAt: 'createdAt'
+};
+export const ProcessedStripeEventScalarFieldEnum = {
+    id: 'id',
     createdAt: 'createdAt'
 };
 export const SortOrder = {

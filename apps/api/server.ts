@@ -31,6 +31,8 @@ if (envPath) {
 
 import express, { Request, Response } from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { prisma } from "@nexrole/database";
 import { authTenant } from "./middleware.js";
 import { apiKeyAuth } from "./middleware/apiKeyAuth.js";
@@ -42,12 +44,39 @@ import { loggerMiddleware, getContextLogger } from "./middleware/loggerMiddlewar
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+  : ["http://localhost:3000"];
+
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+};
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many requests from this IP, please try again after 15 minutes."
+  }
+});
+
 app.use(loggerMiddleware);
+app.use(helmet());
 
 app.use("/api/webhooks", webhookRouter);
 
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use("/api/v1", apiLimiter);
 
 app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "API is running" });

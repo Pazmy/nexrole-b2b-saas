@@ -132,3 +132,10 @@ model AuditLog {
   @@index([createdAt])
   @@map("audit_logs")
 }
+
+model ProcessedStripeEvent {
+  id        String   @id
+  createdAt DateTime @default(now())
+
+  @@map("processed_stripe_events")
+}

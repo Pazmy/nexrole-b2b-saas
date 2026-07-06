@@ -53,6 +53,17 @@ router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
 
   // Handle distinct transactional payment events
   try {
+    // 1. Check for duplicate webhook events (Idempotency check)
+    const existingEvent = await prisma.processedStripeEvent.findUnique({
+      where: { id: event.id },
+    });
+
+    if (existingEvent) {
+      getContextLogger().info({ eventId: event.id }, "Stripe webhook event already processed (idempotent skip)");
+      res.status(200).json({ received: true, ignored: true, reason: "duplicate" });
+      return;
+    }
+
     switch (event.type) {
       case "customer.subscription.created":
       case "customer.subscription.updated": {
@@ -82,11 +93,19 @@ router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
                 },
               },
             }),
+            prisma.processedStripeEvent.create({
+              data: { id: event.id },
+            }),
           ]);
 
           getContextLogger().info(
             `💳 Tenant [${tenantId}] billing subscription state updated to: ${status.toUpperCase()} (Customer: ${stripeCustomerId})`
           );
+        } else {
+          // If no tenant context is mapped, still flag as processed
+          await prisma.processedStripeEvent.create({
+            data: { id: event.id },
+          });
         }
         break;
       }
@@ -114,16 +133,27 @@ router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
                 },
               },
             }),
+            prisma.processedStripeEvent.create({
+              data: { id: event.id },
+            }),
           ]);
 
           getContextLogger().warn(
             `🚨 Payment collection failed for Tenant [${tenantId}]. Flagged as PAST_DUE.`
           );
+        } else {
+          await prisma.processedStripeEvent.create({
+            data: { id: event.id },
+          });
         }
         break;
       }
 
       default:
+        // Flag as processed for unhandled event types as well
+        await prisma.processedStripeEvent.create({
+          data: { id: event.id },
+        });
         getContextLogger().info(`ℹ️ Unhandled Stripe hook event type: ${event.type}`);
     }
 

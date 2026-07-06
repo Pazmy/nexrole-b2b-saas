@@ -56,3 +56,8 @@ export type ApiKey = Prisma.ApiKeyModel;
  *
  */
 export type AuditLog = Prisma.AuditLogModel;
+/**
+ * Model ProcessedStripeEvent
+ *
+ */
+export type ProcessedStripeEvent = Prisma.ProcessedStripeEventModel;
