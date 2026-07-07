@@ -16,7 +16,8 @@
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "pino": "^10.3.1",
-    "stripe": "^22.3.0"
+    "stripe": "^22.3.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

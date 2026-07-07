@@ -4,6 +4,7 @@ import { prisma } from "@nexrole/database";
 import { rawBodyParser } from "../middleware/rawBody.js";
 import { SUBSCRIPTION_STATUS } from "../constants.js";
 import { getContextLogger } from "../middleware/loggerMiddleware.js";
+import { env } from "../lib/env.js";
 
 const router = Router();
 
@@ -18,7 +19,7 @@ interface StripeInvoiceWithSubscriptionDetails extends Stripe.Invoice {
 let stripeInstance: Stripe | null = null;
 function getStripe() {
   if (!stripeInstance) {
-    stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY || "mock_key_for_dev", {
+    stripeInstance = new Stripe(env.STRIPE_SECRET_KEY, {
       apiVersion: "2026-06-24.dahlia",
     });
   }
@@ -27,7 +28,7 @@ function getStripe() {
 
 router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
   const sig = req.headers["stripe-signature"];
-  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const endpointSecret = env.STRIPE_WEBHOOK_SECRET;
 
   let event: Stripe.Event;
 

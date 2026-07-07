@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { getContextLogger } from "./loggerMiddleware.js";
+import { env } from "../lib/env.js";
 
 export function errorHandler(
   err: any,
@@ -14,7 +15,7 @@ export function errorHandler(
 
   // 2. Determine response status code
   const statusCode = err.status || err.statusCode || 500;
-  const isProduction = process.env.NODE_ENV === "production";
+  const isProduction = env.NODE_ENV === "production";
 
   // 3. Respond with sanitized JSON
   res.status(statusCode).json({

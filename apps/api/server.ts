@@ -1,34 +1,4 @@
-import dotenv from "dotenv";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
-
-// ***** Handle Scope Issues with .env files
-const __filename = fileURLToPath(import.meta.url);
-let currentDir = path.dirname(__filename);
-
-// console.log("[Dotenv Debug] __filename:", __filename);
-let envPath = "";
-while (currentDir !== path.parse(currentDir).root) {
-  const checkPath = path.join(currentDir, ".env");
-  if (fs.existsSync(checkPath)) {
-    envPath = checkPath;
-    break;
-  }
-  currentDir = path.dirname(currentDir);
-}
-// console.log("[Dotenv Debug] Resolved envPath:", envPath);
-
-if (envPath) {
-  const result = dotenv.config({ path: envPath });
-  // console.log("[Dotenv Debug] dotenv config result:", result.error ? "Error: " + result.error.message : "Success");
-} else {
-  // console.log("[Dotenv Debug] envPath not found, running default dotenv.config()");
-  dotenv.config();
-}
-// console.log("[Dotenv Debug] STRIPE_WEBHOOK_SECRET loaded:", process.env.STRIPE_WEBHOOK_SECRET ? "YES (starts with " + process.env.STRIPE_WEBHOOK_SECRET.substring(0, 10) + "...)" : "NO");
-// *****END******
-
+import { env } from "./lib/env.js";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -42,10 +12,10 @@ import { logger } from "./lib/logger.js";
 import { loggerMiddleware, getContextLogger } from "./middleware/loggerMiddleware.js";
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = env.PORT;
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",")
+const allowedOrigins = env.ALLOWED_ORIGINS
+  ? env.ALLOWED_ORIGINS.split(",")
   : ["http://localhost:3000"];
 
 const corsOptions = {

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { env } from "./lib/env.js";
 
 export function authTenant(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
@@ -16,7 +17,7 @@ export function authTenant(req: Request, res: Response, next: NextFunction) {
   try {
     const decoded = jwt.verify(
       token,
-      process.env.AUTH_SECRET || "fallback secret",
+      env.AUTH_SECRET,
     ) as JwtPayload;
 
     req.tenantId = decoded.tenantId;
