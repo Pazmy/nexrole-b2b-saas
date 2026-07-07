@@ -238,6 +238,7 @@ export declare const ModelName: {
     readonly Invitation: "Invitation";
     readonly ApiKey: "ApiKey";
     readonly AuditLog: "AuditLog";
+    readonly ProcessedStripeEvent: "ProcessedStripeEvent";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export interface TypeMapCb<GlobalOmitOptions = {}> extends runtime.Types.Utils.Fn<{
@@ -250,7 +251,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "tenant" | "role" | "user" | "transaction" | "invitation" | "apiKey" | "auditLog";
+        modelProps: "tenant" | "role" | "user" | "transaction" | "invitation" | "apiKey" | "auditLog" | "processedStripeEvent";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -772,6 +773,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 };
             };
         };
+        ProcessedStripeEvent: {
+            payload: Prisma.$ProcessedStripeEventPayload<ExtArgs>;
+            fields: Prisma.ProcessedStripeEventFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.ProcessedStripeEventFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.ProcessedStripeEventFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload>;
+                };
+                findFirst: {
+                    args: Prisma.ProcessedStripeEventFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.ProcessedStripeEventFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload>;
+                };
+                findMany: {
+                    args: Prisma.ProcessedStripeEventFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload>[];
+                };
+                create: {
+                    args: Prisma.ProcessedStripeEventCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload>;
+                };
+                createMany: {
+                    args: Prisma.ProcessedStripeEventCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.ProcessedStripeEventCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload>[];
+                };
+                delete: {
+                    args: Prisma.ProcessedStripeEventDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload>;
+                };
+                update: {
+                    args: Prisma.ProcessedStripeEventUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.ProcessedStripeEventDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.ProcessedStripeEventUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.ProcessedStripeEventUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload>[];
+                };
+                upsert: {
+                    args: Prisma.ProcessedStripeEventUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$ProcessedStripeEventPayload>;
+                };
+                aggregate: {
+                    args: Prisma.ProcessedStripeEventAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateProcessedStripeEvent>;
+                };
+                groupBy: {
+                    args: Prisma.ProcessedStripeEventGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.ProcessedStripeEventGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.ProcessedStripeEventCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.ProcessedStripeEventCountAggregateOutputType> | number;
+                };
+            };
+        };
     };
 } & {
     other: {
@@ -875,6 +950,11 @@ export declare const AuditLogScalarFieldEnum: {
     readonly createdAt: "createdAt";
 };
 export type AuditLogScalarFieldEnum = (typeof AuditLogScalarFieldEnum)[keyof typeof AuditLogScalarFieldEnum];
+export declare const ProcessedStripeEventScalarFieldEnum: {
+    readonly id: "id";
+    readonly createdAt: "createdAt";
+};
+export type ProcessedStripeEventScalarFieldEnum = (typeof ProcessedStripeEventScalarFieldEnum)[keyof typeof ProcessedStripeEventScalarFieldEnum];
 export declare const SortOrder: {
     readonly asc: "asc";
     readonly desc: "desc";
@@ -1068,6 +1148,7 @@ export type GlobalOmitConfig = {
     invitation?: Prisma.InvitationOmit;
     apiKey?: Prisma.ApiKeyOmit;
     auditLog?: Prisma.AuditLogOmit;
+    processedStripeEvent?: Prisma.ProcessedStripeEventOmit;
 };
 export type LogLevel = 'info' | 'query' | 'warn' | 'error';
 export type LogDefinition = {

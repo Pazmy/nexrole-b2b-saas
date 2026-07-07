@@ -194,5 +194,16 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get auditLog(): Prisma.AuditLogDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
+    /**
+     * `prisma.processedStripeEvent`: Exposes CRUD operations for the **ProcessedStripeEvent** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more ProcessedStripeEvents
+      * const processedStripeEvents = await prisma.processedStripeEvent.findMany()
+      * ```
+      */
+    get processedStripeEvent(): Prisma.ProcessedStripeEventDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
 }
 export declare function getPrismaClientClass(): PrismaClientConstructor;
