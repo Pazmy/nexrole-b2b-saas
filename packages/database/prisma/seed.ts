@@ -16,13 +16,13 @@ async function main() {
     },
   });
 
-  // 2. Idempotent Tenant Creation
-  let tenant = await prisma.tenant.findFirst({
+  // 2. Idempotent Tenant 1 (Sensei Corp - Active)
+  let tenant1 = await prisma.tenant.findFirst({
     where: { name: "Sensei Corp" },
   });
 
-  if (!tenant) {
-    tenant = await prisma.tenant.create({
+  if (!tenant1) {
+    tenant1 = await prisma.tenant.create({
       data: {
         name: "Sensei Corp",
         subscriptionStatus: "active",
@@ -30,29 +30,61 @@ async function main() {
     });
   }
 
-  // 3. Idempotent User Creation (using upsert on unique email)
-  const user = await prisma.user.upsert({
+  // 3. Idempotent Tenant 2 (Glowstone - Free)
+  let tenant2 = await prisma.tenant.findFirst({
+    where: { name: "Glowstone" },
+  });
+
+  if (!tenant2) {
+    tenant2 = await prisma.tenant.create({
+      data: {
+        name: "Glowstone",
+        subscriptionStatus: "free",
+      },
+    });
+  }
+
+  // 4. Idempotent User 1 (admin@sensei.com)
+  const user1 = await prisma.user.upsert({
     where: { email: "admin@sensei.com" },
     update: {
       roleId: adminRole.id,
-      tenantId: tenant.id,
+      tenantId: tenant1.id,
     },
     create: {
       email: "admin@sensei.com",
       passwordHash: hashedPassword,
-      tenantId: tenant.id,
+      tenantId: tenant1.id,
       roleId: adminRole.id,
     },
   });
 
-  // 4. Clean up previous transaction logs for this tenant
-  // Why: Prevents infinite data growth if you run the seed command multiple times
-  await prisma.transaction.deleteMany({
-    where: { tenantId: tenant.id },
+  // 5. Idempotent User 2 (admin@glowstone.io)
+  const user2 = await prisma.user.upsert({
+    where: { email: "admin@glowstone.io" },
+    update: {
+      roleId: adminRole.id,
+      tenantId: tenant2.id,
+    },
+    create: {
+      email: "admin@glowstone.io",
+      passwordHash: hashedPassword,
+      tenantId: tenant2.id,
+      roleId: adminRole.id,
+    },
   });
 
-  // 5. Generate Real-World Metric Distribution Data
-  const mockTransactions = [
+  // 6. Clean up previous transaction logs for both tenants
+  await prisma.transaction.deleteMany({
+    where: {
+      tenantId: {
+        in: [tenant1.id, tenant2.id],
+      },
+    },
+  });
+
+  // 7. Mock Transactions for Tenant 1 (15 transactions)
+  const senseiTransactions = [
     {
       amount: 1250.0,
       status: "completed",
@@ -130,25 +162,51 @@ async function main() {
     },
   ];
 
-  console.log(
-    `💸 Injecting ${mockTransactions.length} transactions scoped to tenant: [${tenant.name}]...`,
-  );
+  // 8. Mock Transactions for Tenant 2 (11 transactions)
+  const glowstoneTransactions = [
+    { amount: 50.0, status: "completed", description: "Starter Subscription" },
+    { amount: 15.5, status: "completed", description: "Additional Seat License" },
+    { amount: 99.99, status: "completed", description: "Professional Addon Package" },
+    { amount: 200.0, status: "pending", description: "Custom Setup Consultation" },
+    { amount: 10.0, status: "completed", description: "API Overage Bill" },
+    { amount: 5.0, status: "failed", description: "SMS gateway test retry" },
+    { amount: 45.0, status: "completed", description: "Support Tier Upgrade" },
+    { amount: 120.0, status: "completed", description: "Monthly Professional Subscription" },
+    { amount: 80.0, status: "pending", description: "Overage Billing Invoice" },
+    { amount: 35.0, status: "completed", description: "Integration Setup Charge" },
+    { amount: 15.0, status: "failed", description: "Failed payment retry attempt" },
+  ];
 
-  // 6. Bulk Insert Loop
-  for (const tx of mockTransactions) {
+  console.log(`💸 Injecting ${senseiTransactions.length} transactions scoped to [${tenant1.name}]...`);
+  for (const tx of senseiTransactions) {
     await prisma.transaction.create({
       data: {
         amount: tx.amount,
         status: tx.status,
         description: tx.description,
-        tenantId: tenant.id,
-        userId: user.id,
+        tenantId: tenant1.id,
+        userId: user1.id,
+      },
+    });
+  }
+
+  console.log(`💸 Injecting ${glowstoneTransactions.length} transactions scoped to [${tenant2.name}]...`);
+  for (const tx of glowstoneTransactions) {
+    await prisma.transaction.create({
+      data: {
+        amount: tx.amount,
+        status: tx.status,
+        description: tx.description,
+        tenantId: tenant2.id,
+        userId: user2.id,
       },
     });
   }
 
   console.log("✅ Seed pipeline completed successfully!");
-  console.log("👉 Target Portal Account: admin@sensei.com / admin123");
+  console.log("👉 Accounts Generated:");
+  console.log("   - admin@sensei.com / admin123 (Tenant: Sensei Corp - Active)");
+  console.log("   - admin@glowstone.io / admin123 (Tenant: Glowstone - Free)");
 }
 
 main()
