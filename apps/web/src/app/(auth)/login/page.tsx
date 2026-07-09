@@ -69,6 +69,7 @@ export default function LoginPage() {
                   <FormLabel className="text-zinc-300">Email</FormLabel>
                   <FormControl>
                     <Input
+                      type="email"
                       placeholder="admin@sensei.com"
                       {...field}
                       className="bg-zinc-800 border-zinc-700 text-white"
