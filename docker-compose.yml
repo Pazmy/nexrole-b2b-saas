@@ -1,0 +1,57 @@
+services:
+  # 1. DATABASE COMPONENT
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: nexrole_postgres
+    environment:
+      POSTGRES_USER: ${DOCKER_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DOCKER_DB_PASSWORD:-enterprise_secure_password}
+      POSTGRES_DB: ${DOCKER_DB_NAME:-nexrole_production}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DOCKER_DB_USER:-postgres} -d ${DOCKER_DB_NAME:-nexrole_production}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. EXPRESS API microservice GATEWAY
+  api_server:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: nexrole_api
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${DOCKER_DB_USER:-postgres}:${DOCKER_DB_PASSWORD:-enterprise_secure_password}@postgres_db:5432/${DOCKER_DB_NAME:-nexrole_production}?schema=public
+      ALLOWED_ORIGINS: http://localhost:3000
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  # 3. NEXT.JS FIRST-PARTY DASHBOARD CLIENT
+  web_client:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: nexrole_web
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${DOCKER_DB_USER:-postgres}:${DOCKER_DB_PASSWORD:-enterprise_secure_password}@postgres_db:5432/${DOCKER_DB_NAME:-nexrole_production}?schema=public
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      EXPRESS_API_URL: http://api_server:5000
+      AUTH_SECRET: ${DOCKER_AUTH_SECRET:-super_secure_nextauth_secret_token_string_32}
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+      api_server:
+        condition: service_started
+
+volumes:
+  postgres_data:
