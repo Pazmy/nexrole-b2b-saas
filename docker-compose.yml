@@ -1,0 +1,90 @@
+services:
+  # 1. DATABASE COMPONENT
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: nexrole_postgres
+    environment:
+      POSTGRES_USER: ${DOCKER_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DOCKER_DB_PASSWORD:-enterprise_secure_password}
+      POSTGRES_DB: ${DOCKER_DB_NAME:-nexrole_production}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DOCKER_DB_USER:-postgres} -d ${DOCKER_DB_NAME:-nexrole_production}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Initialize the local database before either app starts.
+  db_init:
+    image: ${COMPOSE_PROJECT_NAME:-nexrole-b2b-saas}-web_client
+    pull_policy: never
+    working_dir: /app/packages/database
+    environment:
+      DATABASE_URL: postgresql://${DOCKER_DB_USER:-postgres}:${DOCKER_DB_PASSWORD:-enterprise_secure_password}@postgres_db:5432/${DOCKER_DB_NAME:-nexrole_production}?schema=public
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+    command:
+      - sh
+      - -c
+      - >-
+        npx --no-install prisma migrate deploy &&
+        if [ "$$SEED_DEMO_DATA" = "true" ]; then
+          npm run seed -- --if-empty;
+        fi
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
+  # 2. EXPRESS API microservice GATEWAY
+  api_server:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: nexrole_api
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${DOCKER_DB_USER:-postgres}:${DOCKER_DB_PASSWORD:-enterprise_secure_password}@postgres_db:5432/${DOCKER_DB_NAME:-nexrole_production}?schema=public
+      ALLOWED_ORIGINS: http://localhost:3000
+      AUTH_SECRET: ${DOCKER_AUTH_SECRET:-super_secure_nextauth_secret_token_string_32}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY in the root .env}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?Set STRIPE_WEBHOOK_SECRET in the root .env}
+    depends_on:
+      db_init:
+        condition: service_completed_successfully
+      postgres_db:
+        condition: service_healthy
+
+  # 3. NEXT.JS FIRST-PARTY DASHBOARD CLIENT
+  web_client:
+    image: ${COMPOSE_PROJECT_NAME:-nexrole-b2b-saas}-web_client
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: nexrole_web
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${DOCKER_DB_USER:-postgres}:${DOCKER_DB_PASSWORD:-enterprise_secure_password}@postgres_db:5432/${DOCKER_DB_NAME:-nexrole_production}?schema=public
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      EXPRESS_API_URL: http://api_server:5000
+      AUTH_SECRET: ${DOCKER_AUTH_SECRET:-super_secure_nextauth_secret_token_string_32}
+      AUTH_TRUST_HOST: "true"
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY in the root .env}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?Set STRIPE_WEBHOOK_SECRET in the root .env}
+      STRIPE_PRO_PRICE_ID: ${STRIPE_PRO_PRICE_ID:?Set STRIPE_PRO_PRICE_ID in the root .env}
+      SKIP_ENV_VALIDATION: "false"
+    depends_on:
+      db_init:
+        condition: service_completed_successfully
+      postgres_db:
+        condition: service_healthy
+      api_server:
+        condition: service_started
+
+volumes:
+  postgres_data:

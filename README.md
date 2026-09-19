@@ -178,3 +178,27 @@ Execute these scripts from the monorepo root:
 | `npm run seed -w packages/database`         | Seeds the database using the seed configuration script.                |
 | `npm install <package-name> -w apps/web`    | Installs a node module safely in the Next.js workspace.                |
 | `npm install -D <package-name> -w apps/api` | Installs a development library inside the Express workspace.           |
+
+## Local Docker demo
+
+With the root `.env` configured, run:
+
+```sh
+docker compose up --build -d
+```
+
+Compose waits for PostgreSQL, runs pending Prisma migrations in the one-off
+`db_init` service, and seeds demo data if there are no tenants, users, or roles.
+The API and web app start only after initialization succeeds. `db_init` showing
+`Exited (0)` is expected. Inspect initialization with `docker compose logs db_init`.
+
+Open http://localhost:3000 and sign in as `admin@sensei.com` or
+`admin@glowstone.io`, using password `admin123` for either newly created account.
+The PostgreSQL volume preserves data across rebuilds; automatic seeding skips
+populated databases. Set `SEED_DEMO_DATA=false` in the root `.env` for deployments
+that should not create demo accounts. Migrations still run with seeding disabled.
+
+The initializer uses the web image, so rebuild after changing migrations or seed
+code. For normal starts with current images, use `docker compose up -d`.
+Running the seed manually without `--if-empty` replaces the demo tenants'
+transactions; it is not part of normal startup.
