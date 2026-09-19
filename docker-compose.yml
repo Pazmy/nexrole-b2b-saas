@@ -17,6 +17,26 @@ services:
       timeout: 5s
       retries: 5
 
+  # Initialize the local database before either app starts.
+  db_init:
+    image: ${COMPOSE_PROJECT_NAME:-nexrole-b2b-saas}-web_client
+    pull_policy: never
+    working_dir: /app/packages/database
+    environment:
+      DATABASE_URL: postgresql://${DOCKER_DB_USER:-postgres}:${DOCKER_DB_PASSWORD:-enterprise_secure_password}@postgres_db:5432/${DOCKER_DB_NAME:-nexrole_production}?schema=public
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+    command:
+      - sh
+      - -c
+      - >-
+        npx --no-install prisma migrate deploy &&
+        if [ "$$SEED_DEMO_DATA" = "true" ]; then
+          npm run seed -- --if-empty;
+        fi
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
   # 2. EXPRESS API microservice GATEWAY
   api_server:
     build:
@@ -29,12 +49,18 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://${DOCKER_DB_USER:-postgres}:${DOCKER_DB_PASSWORD:-enterprise_secure_password}@postgres_db:5432/${DOCKER_DB_NAME:-nexrole_production}?schema=public
       ALLOWED_ORIGINS: http://localhost:3000
+      AUTH_SECRET: ${DOCKER_AUTH_SECRET:-super_secure_nextauth_secret_token_string_32}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY in the root .env}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?Set STRIPE_WEBHOOK_SECRET in the root .env}
     depends_on:
+      db_init:
+        condition: service_completed_successfully
       postgres_db:
         condition: service_healthy
 
   # 3. NEXT.JS FIRST-PARTY DASHBOARD CLIENT
   web_client:
+    image: ${COMPOSE_PROJECT_NAME:-nexrole-b2b-saas}-web_client
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -47,7 +73,14 @@ services:
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       EXPRESS_API_URL: http://api_server:5000
       AUTH_SECRET: ${DOCKER_AUTH_SECRET:-super_secure_nextauth_secret_token_string_32}
+      AUTH_TRUST_HOST: "true"
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY in the root .env}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?Set STRIPE_WEBHOOK_SECRET in the root .env}
+      STRIPE_PRO_PRICE_ID: ${STRIPE_PRO_PRICE_ID:?Set STRIPE_PRO_PRICE_ID in the root .env}
+      SKIP_ENV_VALIDATION: "false"
     depends_on:
+      db_init:
+        condition: service_completed_successfully
       postgres_db:
         condition: service_healthy
       api_server:

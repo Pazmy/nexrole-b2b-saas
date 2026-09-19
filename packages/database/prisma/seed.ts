@@ -2,6 +2,18 @@ import { prisma } from "../index";
 import bcrypt from "bcryptjs";
 
 async function main() {
+  if (process.argv.includes("--if-empty")) {
+    const [tenants, users, roles] = await Promise.all([
+      prisma.tenant.count(),
+      prisma.user.count(),
+      prisma.role.count(),
+    ]);
+    if (tenants > 0 || users > 0 || roles > 0) {
+      console.log("Database already contains data; skipping automatic demo seed.");
+      return;
+    }
+  }
+
   console.log("🌱 Starting enterprise database seeding...");
 
   const hashedPassword = await bcrypt.hash("admin123", 10);
