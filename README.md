@@ -2,6 +2,8 @@
 
 Nexrole is a modern, multi-tenant B2B SaaS application boilerplate configured as an npm workspaces monorepo. It features a Next.js web application, an Express.js API server, and a shared Prisma database access package.
 
+For MVP scope, implementation priorities, and release acceptance criteria, see [BUILD_PLAN.md](BUILD_PLAN.md#phase-8-mvp-workflow-completion--release-acceptance). Phase 8 tracks remaining work; earlier phases describe the existing foundation.
+
 ---
 
 ## 🚀 Architecture Overview

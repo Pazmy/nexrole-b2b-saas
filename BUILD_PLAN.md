@@ -2,9 +2,17 @@
 
 This serves as a detailed engineering manual, blueprint, and interactive checkpoint tracking sheet during the development phase.
 
-## Current document version: `V.1.2.0`
+## Current document version: `V.1.3.0`
 
-## Last updated: `2026-07-04`
+## Last updated: `2026-09-20`
+
+## MVP target and tracking rules
+
+**Target:** A new company can register, verify its administrator's email, create its first transaction, invite a teammate, and let that teammate access only permitted workspace data. The administrator can recover account access and manage the workspace subscription.
+
+Phase 8 below is the source of truth for remaining MVP work and release acceptance. Phases 0–7 record the foundation already built; checked implementation tasks do not imply production readiness. The September 20 review was a source inspection, not a runtime acceptance test.
+
+Keep scope, dependencies, and acceptance criteria here. Use issues or PRs for individual implementation tasks, referencing the step ID (for example, `8.3`). Check off a Phase 8 item only when implemented and verified, and link its PR/test evidence beside it. Keep setup instructions in `README.md` and Stripe operational details in `STRIPE_GUIDE.md`; avoid maintaining a second roadmap.
 
 ---
 
@@ -34,7 +42,7 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
 - Initialized specialized TypeScript module compilation environments inside the microservice container.
 - Restructured application codebases from standard JavaScript into clean, type-safe ES modules.
 - Deployed a signature-decoding JWT bearer token authentication middleware module.
-- Enforced tenant multi-tenancy limits across all remote data routes.
+- Added tenant filters to transaction routes. The unprotected `/api/users` route remains a release blocker tracked in Step 8.1.
 
 ---
 
@@ -103,7 +111,7 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
 **Objective:** Establish automated payment gateways to restrict enterprise workspace limits based on the company's active subscription tier.
 
 - [x] **Step 6.1: Define Enterprise Feature Set Scopes & Upgrade Path**
-  - Create a core resource allocation map (`apps/web/src/lib/billing-guard.ts`). Restrict core behaviors based on active subscription status definitions (e.g., limit accounts on the Free tier to 10 logged operations per month, while unlocking unmetered records for Pro accounts).
+  - Created `apps/web/src/lib/billing-guard.ts` to calculate billing state. The current Free limit counts all stored transactions, not monthly usage. Server-side write enforcement remains open in Phase 8.
   - **Upgrade Action path (`apps/web/src/app/(dashboard)/settings/_components/ProfileForm.tsx`):** Mounted an upgrade form action when `subscriptionStatus === "free"`. The "Upgrade Workspace Account" button invokes the `startCheckoutSession` server action via `formAction` to redirect users to a Stripe hosted Checkout Session.
 - [x] **Step 6.2: Set Up Stripe Webhook Listeners inside Express Server**
   - Implement a dedicated webhook routing terminal endpoint within your Express microservice: `apps/api/routes/webhook.ts` (API version pinned to `2026-06-24.dahlia`).
@@ -124,10 +132,93 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
   - Write test scenarios where two distinct seeded client accounts session tokens execute concurrent actions, ensuring Tenant A can never view or intercept operational inputs belonging to Tenant B.
 - [x] **Step 7.2: Orchestrated Multi-Service Docker Compose Configuration**
   - Build a root-level `docker-compose.yml` to spin up local development environments, including a localized PostgreSQL database instance, your TypeScript Express backend, and the Next.js App Router workspace.
-- [ ] **Step 7.3: Database-Driven Compliance Audit Ledger**
+- [x] **Step 7.3: Database-Driven Audit Ledger Foundation**
   - Implement automated audit triggers inside critical data mutation actions. Write security logs tracking changes to organization profiles or team structures into an `AuditLog` table containing the actor's User ID, metadata, and IP addresses.
-- [ ] **Step 7.4: Structured Telemetry Tracking Engine**
+  - Model and logging utility exist with profile, invitation, API-key, and billing event coverage. Actor ID wiring and coverage for new mutations still require verification in Phase 8.
+- [x] **Step 7.4: Structured Telemetry Tracking Engine**
   - Integrate a professional logging tool (e.g., Winston or Pino) inside the Express API container to format exception events and logs into clean, indexable JSON outputs.
+  - Pino and request correlation middleware are implemented.
+
+---
+
+### Phase 8: MVP Workflow Completion & Release Acceptance
+
+**Status:** Planned; no acceptance checks completed yet.
+
+**Scope:** One workspace per user, fixed roles, transaction creation/detail/status updates, team invitations, account recovery, and Free/Pro billing. Retain the existing Next.js server components/actions → shared Prisma flow and Express integration/webhook endpoints. A backend rewrite is not required for MVP.
+
+**Sequence:** 8.1 → 8.2 → 8.3 → 8.4 → 8.5 → 8.6. Build regression coverage alongside each step; 8.6 verifies the complete release candidate.
+
+#### Step 8.1: Close access-control gaps — release blocker
+
+- [ ] Remove `/api/users` if unused, or require authorized tenant-scoped access and return an explicit safe field selection. Never return password hashes.
+- [ ] Centralize server-side checks for current user, active membership, tenant, and allowed action. Define a small fixed-role permission matrix and enforce it in actions and API handlers, not just buttons.
+- [ ] Reject inactive accounts at login and on protected operations, including existing sessions after deactivation or role changes.
+- [ ] Restrict billing changes and portal access to workspace administrators.
+- [ ] Resolve `/api/transactions` authentication: remove the unused route or implement and document a supported token issuance/validation flow. Validate required tenant claims before querying; do not assume Auth.js cookies are Express Bearer tokens.
+
+**Acceptance:** Anonymous requests, inactive accounts, insufficient roles, and cross-tenant resource IDs cannot read or mutate protected data. Regression tests exercise the server boundaries directly.
+
+#### Step 8.2: Complete onboarding and account recovery
+
+- [ ] Make `/register` a public entry point that redirects to or renders workspace registration, and link it from login. Reuse the existing `/register/workspace` implementation.
+- [ ] Apply shared server-side validation to registration, login, and invitation acceptance; normalize email before lookup and storage; handle duplicate accounts and concurrent submissions cleanly.
+- [ ] Add email verification, forgot/reset password, and authenticated change-password flows with expiring, single-use tokens and appropriate session invalidation.
+- [ ] Add abuse limits to login, registration, verification, and recovery endpoints. Avoid exposing account existence through recovery responses.
+- [ ] Configure transactional email and application base URL for verification, recovery, and invitations. Replace hardcoded localhost invitation links.
+- [ ] Provide pending, success, validation, expired-token, and retry states with plain user-facing language.
+
+**Acceptance:** A new company onboards without seed data, verifies email, signs in, and recovers access. Invalid/expired/reused tokens fail safely; failed registration leaves no orphan tenant.
+
+#### Step 8.3: Deliver the first useful transaction workflow
+
+- [ ] Add transaction creation, a detail view, and permitted status updates. Define amount validation and allowed status transitions; derive tenant and actor from verified server context.
+- [ ] Enforce permissions and billing entitlements on every transaction write. Make Free quota enforcement safe under concurrent creates.
+- [ ] MVP quota decision: Free allows at most 10 stored transactions per workspace; eligible Pro subscriptions have no transaction-count limit. Monthly reset semantics and transaction deletion are deferred.
+- [ ] Preserve search/filter/pagination; validate query parameters and provide useful empty, loading, success, and error states.
+- [ ] Remove the hardcoded dashboard growth percentage or replace it with a real period comparison.
+
+**Acceptance:** A new workspace creates and updates its own transactions; dashboard totals reflect changes. Unauthorized writes fail. The tenth Free transaction succeeds and the eleventh is rejected, including concurrent submissions.
+
+#### Step 8.4: Complete workspace membership management
+
+- [ ] Extend the existing settings member list with fixed-role changes and deactivation; prevent removing or demoting the last active administrator.
+- [ ] List pending invitations and support revocation/resending with token rotation and expiry. Validate invite email and allowed role on the server.
+- [ ] Handle duplicate invitations and existing-account emails explicitly. MVP retains one workspace per user; do not silently move existing accounts between tenants.
+- [ ] Deliver invitation email, consume acceptance tokens atomically, and ensure revoked/expired/used tokens cannot create accounts.
+- [ ] Implement or remove the placeholder `/settings/members` and `/settings/roles` pages so navigation does not lead to unfinished screens.
+
+**Acceptance:** An admin invites a teammate, the teammate joins the correct workspace with the assigned permissions, and later deactivation blocks access even with an existing session.
+
+#### Step 8.5: Make billing and audit behavior consistent
+
+- [ ] Reuse the tenant's Stripe customer and track its subscription identity; prevent repeated checkout from creating unintended duplicate subscriptions.
+- [ ] Define explicit entitlement handling for all subscription states, including trialing, incomplete, paused, canceled, past_due, and unpaid. Unknown states must not automatically grant Pro access.
+- [ ] Handle subscription deletion/cancellation and verify invoice-to-tenant resolution against the configured Stripe API version.
+- [ ] Verify duplicate, concurrent, and out-of-order webhook delivery cannot leave stale entitlements or duplicate effects.
+- [ ] Keep reads, account recovery, and billing recovery available when writes are restricted; show the actual quota or payment reason in the UI.
+- [ ] Wire authenticated actor IDs into audit records and cover transaction/member changes. Record tenant, actor, action, and timestamp without passwords or raw tokens; define behavior when audit persistence fails.
+
+**Acceptance:** Stripe test-mode upgrade, payment failure, recovery, and cancellation produce the intended write permissions. Audit records identify the correct workspace and actor. Existing webhook signature verification remains covered.
+
+#### Step 8.6: Verify and document the release candidate
+
+- [ ] Run the full new-company journey: register → verify → sign in → create transaction → invite teammate → accept → verify role restrictions → deactivate teammate.
+- [ ] Cover password recovery, expired/reused invitations, last-admin protection, cross-tenant reads/writes, API-key revocation, quota concurrency, and billing lifecycle behavior.
+- [ ] Retain the existing tenant-isolation browser test and expand beyond UI visibility to server actions and API authorization boundaries.
+- [ ] Run web lint/build, API TypeScript build, and applicable automated tests. The current root build omits the API build, so include it explicitly or update build orchestration.
+- [ ] Smoke-test clean-database migrations and Docker startup with demo seeding disabled; document required environment variables, email setup, and deployment steps in README.
+- [ ] Record release evidence here (PRs, test results, date, and any remaining limitations). Do not mark MVP complete while a required item above is open.
+
+**MVP exit gate:** All six steps pass their acceptance criteria on the release candidate, with no unresolved tenant-isolation or authorization failures.
+
+#### After MVP — explicitly deferred
+
+- Admin audit-history UI with filters/export; audit recording is required for MVP.
+- Advanced charts, period analytics, and CSV import/export.
+- Multiple workspace memberships and workspace switching.
+- Custom role editors, SSO/MFA, and expanded API-key scopes/expiry/usage analytics.
+- Transaction deletion, monthly quota resets, and additional subscription tiers.
 
 ---
 
@@ -192,7 +283,7 @@ Follow these styling rules and guidelines to maintain uniform layout rendering a
 - [x] Configure full TypeScript compilation setups within your API workspace.
 - [x] Refactor raw JavaScript server components into fully typed ES modules.
 - [x] Deploy custom middleware components to decode incoming user sessions from request authorization headers.
-- [x] Secure all Express data endpoints behind multi-tenant query constraint parameters.
+- [ ] Secure all Express data endpoints behind authentication and tenant constraints; `/api/users` remediation is tracked in Step 8.1.
 
 ### Phase 4: B2B Onboarding & Cryptographic Invite Loops
 
@@ -210,12 +301,16 @@ Follow these styling rules and guidelines to maintain uniform layout rendering a
 
 - [x] Map tier limits against application database queries and layouts.
 - [x] Deploy validated Stripe endpoint webhook listener tunnels inside your Express app.
-- [x] Implement system-wide middleware access guards to check corporate payment statuses.
+- [ ] Enforce billing entitlements on writes; the existing layout check only displays alerts. See Steps 8.3 and 8.5.
 
 ### Phase 7: Production Infrastructure & Compliance Observability
 
-- [ ] Build dynamic analytics visualizations (Recharts) on the dashboard landing page.
-- [x] Implement Playwright E2E tests checking authentication, tenant isolation, and RBAC visibility rules.
+- [ ] Build dynamic analytics visualizations on the dashboard landing page (deferred until after MVP).
+- [x] Add initial Playwright login and tenant-isolation UI coverage; broader authorization coverage is tracked in Step 8.6.
 - [x] Construct a root Docker Compose file to orchestrate local development databases and services.
-- [ ] Implement database-driven Audit Log logging utilities for security compliance tracking.
-- [ ] Refactor API logs to use structured loggers (Winston/Pino) with correlation IDs.
+- [x] Implement the AuditLog model and logging utility; complete actor wiring and mutation coverage in Step 8.5.
+- [x] Add Pino structured API logging with request correlation IDs.
+
+### Phase 8: MVP Workflow Completion & Release Acceptance
+
+Track remaining work and acceptance evidence only in the detailed Phase 8 checklist above to avoid duplicate task statuses.
