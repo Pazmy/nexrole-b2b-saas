@@ -44,7 +44,7 @@ export default function ProfileForm({
         </div>
       </div>
 
-      {tenant?.subscriptionStatus === SUBSCRIPTION_STATUS.FREE && (
+      {userRole === ROLE.SUPER_ADMIN && tenant?.subscriptionStatus === SUBSCRIPTION_STATUS.FREE && (
         <div className="border-t border-zinc-800 pt-4 mt-4">
           <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wide">
             Unlock Enterprise Pro

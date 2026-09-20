@@ -6,6 +6,7 @@ interface BillingAlertBannerProps {
   tier: string;
   usage: number;
   max: number;
+  canManageBilling: boolean;
 }
 
 export default function BillingAlertBanner({
@@ -13,6 +14,7 @@ export default function BillingAlertBanner({
   tier,
   usage,
   max,
+  canManageBilling,
 }: BillingAlertBannerProps) {
   return (
     <div
@@ -42,7 +44,7 @@ export default function BillingAlertBanner({
         </div>
       </div>
 
-      <form action={startCustomerPortalSession}>
+      {canManageBilling ? <form action={startCustomerPortalSession}>
         <button
           type="submit"
           className={`h-8 px-4 rounded-md text-xs font-semibold tracking-wide inline-flex items-center gap-1.5 transition-colors whitespace-nowrap self-end sm:self-center ${
@@ -54,7 +56,7 @@ export default function BillingAlertBanner({
           Resolve Billing System
           <ArrowUpRight className="h-3.5 w-3.5" />
         </button>
-      </form>
+      </form> : <p className="text-xs text-zinc-400">Contact your workspace administrator to manage billing.</p>}
     </div>
   );
 }

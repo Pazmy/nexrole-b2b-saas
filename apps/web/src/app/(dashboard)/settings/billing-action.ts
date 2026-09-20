@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requirePermission } from "@/lib/authorization";
 import Stripe from "stripe";
 import { redirect } from "next/navigation";
 import { prisma } from "@nexrole/database";
@@ -23,14 +23,7 @@ const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
 // 1. TRIGGER STRIPE CHECKOUT (For Upgrading from Free to Pro)
 export async function startCheckoutSession() {
-  const session = await auth();
-
-  if (!session?.user) throw new Error("User is not authenticated.");
-
-  const tenantId = session.user.tenantId;
-  const userEmail = session.user.email ?? undefined;
-
-  if (!tenantId) throw new Error("Unauthorized context.");
+  const { tenantId, email: userEmail } = await requirePermission("billing:manage");
 
   // Create a secure hosted checkout window
   const checkoutSession = await getStripe().checkout.sessions.create({
@@ -63,12 +56,7 @@ export async function startCheckoutSession() {
 
 // 2. TRIGGER STRIPE CUSTOMER PORTAL (For Resolving Past Due Billing Errors)
 export async function startCustomerPortalSession() {
-  const session = await auth();
-  const tenantId = session?.user?.tenantId;
-  const userEmail = session?.user?.email;
-
-  if (!tenantId) throw new Error("Unauthorized context.");
-  if (!userEmail) throw new Error("User email not found in session.");
+  const { tenantId, email: userEmail } = await requirePermission("billing:manage");
 
   // Fetch the tenant from the database to see if we already have a customer ID mapped
   const tenant = await prisma.tenant.findUnique({

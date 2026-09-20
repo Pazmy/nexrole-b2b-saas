@@ -1,29 +1,24 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requirePermission } from "@/lib/authorization";
 import { prisma } from "@nexrole/database";
 import crypto from "crypto";
 import { writeAuditLog } from "@/lib/audit";
+import { isWorkspaceRole } from "@/lib/permissions";
 
 export async function createMemberInvitation(
   email: string,
   roleName: string = "Member",
 ) {
-  const session = await auth();
-  const tenantId = session?.user?.tenantId;
-  const userRole = session?.user?.role;
-
-  if (!tenantId || userRole !== "SuperAdmin") {
-    throw new Error("Unauthorized access. SuperAdmin credentials required.");
-  }
+  const { tenantId } = await requirePermission("members:invite");
+  if (!isWorkspaceRole(roleName)) throw new Error("Invalid workspace role.");
 
   // Find target role entry in database
-  let targetRole = await prisma.role.findFirst({ where: { name: roleName } });
-  if (!targetRole) {
-    targetRole = await prisma.role.create({
-      data: { name: roleName, permissions: [] },
-    });
-  }
+  const targetRole = await prisma.role.upsert({
+    where: { name: roleName },
+    create: { name: roleName, permissions: [] },
+    update: {},
+  });
 
   // Generate an un-guessable cryptographic secure token string
   const secretToken = crypto.randomBytes(32).toString("hex");

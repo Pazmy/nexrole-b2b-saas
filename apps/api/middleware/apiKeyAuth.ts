@@ -7,9 +7,9 @@ export async function apiKeyAuth(
   res: Response,
   next: NextFunction,
 ) {
-  const rawApiKey = req.headers["x-api-key"] as string;
+  const rawApiKey = req.headers["x-api-key"];
 
-  if (!rawApiKey) {
+  if (typeof rawApiKey !== "string" || !rawApiKey.trim()) {
     res
       .status(401)
       .json({ error: "Access denied. X-API-Key header is missing." });

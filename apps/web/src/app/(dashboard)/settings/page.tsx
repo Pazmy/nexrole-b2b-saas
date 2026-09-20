@@ -1,4 +1,5 @@
-import { auth } from "@/auth";
+import { requirePermission } from "@/lib/authorization";
+import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@nexrole/database";
 import ProfileForm from "./_components/ProfileForm";
 import InviteMemberForm from "@/components/invite-member-form";
@@ -19,33 +20,23 @@ enum Tabs {
 }
 
 export default async function SettingsPage({ searchParams }: PageProps) {
-  const session = await auth();
-  const tenantId = session?.user?.tenantId;
-  const userRole = session?.user?.role;
-
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!tenantId || !uuidRegex.test(tenantId)) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        Error: Invalid or missing organization credentials. Please sign in again.
-      </div>
-    );
-  }
+  const { tenantId, role: userRole } = await requirePermission("workspace:read");
 
   const resolvedParams = await searchParams;
   const activeTab = resolvedParams.tab || Tabs.Profile;
 
   const [tenant, teamMembers, apiKeys] = await Promise.all([
-    prisma.tenant.findUnique({ where: { id: tenantId } }),
+    prisma.tenant.findUnique({ where: { id: tenantId }, select: { name: true, subscriptionStatus: true } }),
     prisma.user.findMany({
       where: { tenantId },
-      include: { role: true },
+      select: { id: true, email: true, createdAt: true, role: { select: { name: true } } },
       orderBy: { createdAt: "asc" },
     }),
-    prisma.apiKey.findMany({
+    hasPermission(userRole, "keys:manage") ? prisma.apiKey.findMany({
       where: { tenantId },
+      select: { id: true, name: true, createdAt: true },
       orderBy: { createdAt: "desc" },
-    }),
+    }) : Promise.resolve([]),
   ]);
 
   return (

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { AccessDeniedError, requirePermission } from "@/lib/authorization";
 import { prisma } from "@nexrole/database";
 import { revalidatePath } from "next/cache";
 import { writeAuditLog } from "@/lib/audit";
@@ -14,16 +14,12 @@ export async function updateTenantProfile(
   prevState: ProfileFormState | null,
   formData: FormData,
 ) {
-  const session = await auth();
-
-  const tenantId = session?.user?.tenantId;
-  const userRole = session?.user?.role;
-
-  if (!tenantId || !userRole || userRole !== "SuperAdmin") {
-    return {
-      error:
-        "Unauthorized. Only SuperAdmins can modify organization parameters.",
-    };
+  let tenantId: string;
+  try {
+    ({ tenantId } = await requirePermission("workspace:update"));
+  } catch (error) {
+    if (error instanceof AccessDeniedError) return { error: error.message };
+    throw error;
   }
 
   const name = (formData.get("name") || formData.get("companyName")) as string;

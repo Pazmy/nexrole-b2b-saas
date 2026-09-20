@@ -13,7 +13,8 @@
     "lint": "npm run lint --workspaces --if-present",
     "db:generate": "npm run generate -w packages/database",
     "db:push": "npm run push -w packages/database",
-    "test:e2e": "npm run test:e2e -w apps/web"
+    "test:e2e": "npm run test:e2e -w apps/web",
+    "test:access": "node --test tests/access-control.test.cjs"
   },
   "engines": {
     "node": ">=22.15.0"

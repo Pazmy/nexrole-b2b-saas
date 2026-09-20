@@ -47,10 +47,10 @@ nexrole-monorepo/
 - **Entry Point:** [server.ts](file://nexrole-b2b-saas/apps/api/server.ts)
 - **API Endpoints:**
   - `/health`: System heartbeat.
-  - `/api/users`: Retrieve system user contexts.
-  - `/api/transactions` (requires cookie session auth): Fetch tenant-specific transactions.
   - `/api/v1/transactions` (requires API key auth via header): Machine-to-machine transaction history export.
   - `/api/webhooks/stripe` (requires raw body parsing): Webhook endpoint listening for cryptographically signed Stripe transactions.
+  - Routes are defined in `apps/api/app.ts`; `server.ts` starts the listener and handles shutdown.
+  - The unused `/api/users` and `/api/transactions` routes have been removed and return 404. Auth.js browser sessions are not Express Bearer tokens. Web reads and actions use Prisma on the Next.js server; integrations use `X-API-Key`.
 
 #### 3. Database Package (`packages/database`)
 
@@ -64,6 +64,23 @@ nexrole-monorepo/
   - **Transaction**: Tenant-bound transaction data.
   - **Invitation**: Temporary registration tokens for joining specific organizations.
   - **ApiKey**: Secure SHA-256 hashes of developer credentials.
+
+### Access control (MVP Step 8.1)
+
+Web operations use `requirePermission` in `apps/web/src/lib/authorization.ts`. Each protected page/action checks the authenticated user ID and tenant against current active database membership. Auth.js also refreshes the database role and invalidates sessions for inactive/deleted users or a changed tenant. Client-provided roles and tenant IDs do not authorize operations.
+
+| Operation | SuperAdmin | Member | Developer |
+| --- | --- | --- | --- |
+| Read workspace, member directory, and transactions | Yes | Yes | Yes |
+| Update organization or invite members | Yes | No | No |
+| View API-key metadata, create/revoke keys | Yes | No | No |
+| Open Stripe checkout or billing portal | Yes | No | No |
+
+`SuperAdmin` is a workspace administrator, not a cross-tenant administrator. Unknown roles are denied. `permissions.ts` is the fixed MVP permission matrix; the database `Role.permissions` JSON is not used for custom grants. Invitation role assignments are restricted to these three roles.
+
+API keys are separate workspace credentials with read-only transaction export access. They are not tied to an individual user's session or activity status; revoke the key to remove integration access. Key hashes remain server-side, and only administrators receive key metadata in the settings UI.
+
+Run `npm run test:access` from the repository root for the access-control regressions. They execute the real guards, Auth.js callbacks, server actions, and Express HTTP routes with mocked database/session/Stripe boundaries; no database credentials are required. Browser and live-database acceptance remains part of the MVP release checks.
 
 ---
 

@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { requirePermission } from "@/lib/authorization";
 import { prisma } from "@nexrole/database";
 import TransactionFilters from "@/components/transaction-filters";
 import { ArrowLeft, ArrowRight, AlertCircle } from "lucide-react";
@@ -9,17 +9,7 @@ interface PageProps {
 }
 
 export default async function TransactionsPage({ searchParams }: PageProps) {
-  const session = await auth();
-  const tenantId = session?.user?.tenantId;
-
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!tenantId || !uuidRegex.test(tenantId)) {
-    return (
-      <div className="p-8 text-center text-red-400">
-        Error: Invalid or missing organization credentials. Please sign in again.
-      </div>
-    );
-  }
+  const { tenantId } = await requirePermission("transactions:read");
 
   const resolvedParams = await searchParams;
   const currentPage = Number(resolvedParams.page) || 1;

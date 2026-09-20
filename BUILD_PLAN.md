@@ -42,7 +42,7 @@ Keep scope, dependencies, and acceptance criteria here. Use issues or PRs for in
 - Initialized specialized TypeScript module compilation environments inside the microservice container.
 - Restructured application codebases from standard JavaScript into clean, type-safe ES modules.
 - Deployed a signature-decoding JWT bearer token authentication middleware module.
-- Added tenant filters to transaction routes. The unprotected `/api/users` route remains a release blocker tracked in Step 8.1.
+- Added tenant filters to transaction routes. Step 8.1 subsequently removed the unused `/api/users` and legacy Bearer-token transaction routes; integrations use `/api/v1/transactions`.
 
 ---
 
@@ -143,7 +143,7 @@ Keep scope, dependencies, and acceptance criteria here. Use issues or PRs for in
 
 ### Phase 8: MVP Workflow Completion & Release Acceptance
 
-**Status:** Planned; no acceptance checks completed yet.
+**Status:** In progress. Step 8.1 implemented with automated boundary regression coverage; remaining steps and full release acceptance are open.
 
 **Scope:** One workspace per user, fixed roles, transaction creation/detail/status updates, team invitations, account recovery, and Free/Pro billing. Retain the existing Next.js server components/actions → shared Prisma flow and Express integration/webhook endpoints. A backend rewrite is not required for MVP.
 
@@ -151,13 +151,21 @@ Keep scope, dependencies, and acceptance criteria here. Use issues or PRs for in
 
 #### Step 8.1: Close access-control gaps — release blocker
 
-- [ ] Remove `/api/users` if unused, or require authorized tenant-scoped access and return an explicit safe field selection. Never return password hashes.
-- [ ] Centralize server-side checks for current user, active membership, tenant, and allowed action. Define a small fixed-role permission matrix and enforce it in actions and API handlers, not just buttons.
-- [ ] Reject inactive accounts at login and on protected operations, including existing sessions after deactivation or role changes.
-- [ ] Restrict billing changes and portal access to workspace administrators.
-- [ ] Resolve `/api/transactions` authentication: remove the unused route or implement and document a supported token issuance/validation flow. Validate required tenant claims before querying; do not assume Auth.js cookies are Express Bearer tokens.
+- [x] Remove `/api/users` if unused, or require authorized tenant-scoped access and return an explicit safe field selection. Never return password hashes.
+- [x] Centralize server-side checks for current user, active membership, tenant, and allowed action. Define a small fixed-role permission matrix and enforce it in actions and API handlers, not just buttons.
+- [x] Reject inactive accounts at login and on protected operations, including existing sessions after deactivation or role changes.
+- [x] Restrict billing changes and portal access to workspace administrators.
+- [x] Resolve `/api/transactions` authentication: remove the unused route or implement and document a supported token issuance/validation flow. Validate required tenant claims before querying; do not assume Auth.js cookies are Express Bearer tokens.
 
 **Acceptance:** Anonymous requests, inactive accounts, insufficient roles, and cross-tenant resource IDs cannot read or mutate protected data. Regression tests exercise the server boundaries directly.
+
+**Implementation and evidence (2026-09-20):**
+
+- Removed both unused Express routes and the legacy JWT middleware. `apps/api/app.ts` exposes the application for HTTP tests; `server.ts` retains startup/shutdown. `/api/v1/transactions` keeps tenant-scoped API-key authentication.
+- Added `current-user.ts`, `authorization.ts`, and a fixed `permissions.ts` matrix. All dashboard data reads and settings mutations check current membership. Auth.js rejects inactive login and refreshes/invalidates existing sessions. Billing actions require SuperAdmin. See the README access-control table for the role policy.
+- Settings queries select only needed fields, omit stored API-key hashes from client props, and restrict key metadata to admins. Key deletion includes tenant scope. Invitations cannot assign unknown roles.
+- `npm run test:access`: **16 passing tests**, including direct server-action denials, stale sessions, login checks, cross-tenant key revocation, and real HTTP requests for removed routes and tenant-scoped API exports. External database/session/Stripe boundaries are mocked; this is not a live-database or browser acceptance run.
+- Web lint, web TypeScript checking, and API TypeScript build passed. Web production build remains **unverified**: the sandbox could not fetch Google Fonts; the network-enabled retry encountered an `EPERM` unlink error in `.next/build/chunks`. Repeat the production build in a working local/CI environment before release.
 
 #### Step 8.2: Complete onboarding and account recovery
 
@@ -283,7 +291,7 @@ Follow these styling rules and guidelines to maintain uniform layout rendering a
 - [x] Configure full TypeScript compilation setups within your API workspace.
 - [x] Refactor raw JavaScript server components into fully typed ES modules.
 - [x] Deploy custom middleware components to decode incoming user sessions from request authorization headers.
-- [ ] Secure all Express data endpoints behind authentication and tenant constraints; `/api/users` remediation is tracked in Step 8.1.
+- [x] Secure the remaining Express data endpoint with tenant-scoped API-key authentication; unused legacy routes were removed in Step 8.1.
 
 ### Phase 4: B2B Onboarding & Cryptographic Invite Loops
 

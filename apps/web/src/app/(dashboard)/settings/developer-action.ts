@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { requirePermission } from "@/lib/authorization";
 import { prisma } from "@nexrole/database";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
@@ -8,13 +8,7 @@ import { writeAuditLog } from "@/lib/audit";
 
 // 1. Generate a brand new token profile securely
 export async function generateApiKey(name: string) {
-  const session = await auth();
-  const tenantId = session?.user?.tenantId;
-  const userRole = session?.user?.role;
-
-  if (!tenantId || userRole !== "SuperAdmin") {
-    throw new Error("Unauthorized access. SuperAdmin privileges required.");
-  }
+  const { tenantId } = await requirePermission("keys:manage");
 
   if (!name || name.trim().length < 2) {
     throw new Error("API Key label must be at least 2 characters long.");
@@ -51,13 +45,7 @@ export async function generateApiKey(name: string) {
 
 // 2. Revoke an existing API key
 export async function revokeApiKey(keyId: string) {
-  const session = await auth();
-  const tenantId = session?.user?.tenantId;
-  const userRole = session?.user?.role;
-
-  if (!tenantId || userRole !== "SuperAdmin") {
-    throw new Error("Unauthorized access.");
-  }
+  const { tenantId } = await requirePermission("keys:manage");
 
   const keyRecord = await prisma.apiKey.findFirst({
     where: {
@@ -70,6 +58,7 @@ export async function revokeApiKey(keyId: string) {
     await prisma.apiKey.delete({
       where: {
         id: keyId,
+        tenantId,
       },
     });
 
