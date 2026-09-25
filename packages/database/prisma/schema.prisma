@@ -49,6 +49,9 @@ model User {
   email        String        @unique
   passwordHash String
   isActive     Boolean       @default(true)
+  emailVerifiedAt DateTime?
+  sessionVersion Int         @default(0)
+  accountTokens AccountToken[]
 
   // Foreign Keys
   tenantId     String        @db.Uuid
@@ -138,4 +141,26 @@ model ProcessedStripeEvent {
   createdAt DateTime @default(now())
 
   @@map("processed_stripe_events")
+}
+
+model AccountToken {
+  tokenHash      String   @id
+  userId         String   @db.Uuid
+  purpose        String
+  sessionVersion Int
+  expiresAt      DateTime
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, purpose])
+  @@index([expiresAt])
+  @@map("account_tokens")
+}
+
+model AuthRateLimit {
+  key       String   @id
+  count     Int
+  expiresAt DateTime
+
+  @@index([expiresAt])
+  @@map("auth_rate_limits")
 }

@@ -1,29 +1,16 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-
 export default auth((req) => {
-  const isLoggedIn = !!req.auth;
-  const isAuthPage = req.nextUrl.pathname.startsWith("/login");
-
-  // Define public accessibility exceptions
-  const isPublicRegisterPage =
-    req.nextUrl.pathname.startsWith("/register/workspace") ||
-    req.nextUrl.pathname.startsWith("/register/invite");
-
-  // 1. If trying to access dashboard but not logged in -> Redirect to Login
-  if (!isLoggedIn && !isAuthPage && !isPublicRegisterPage) {
-    return NextResponse.redirect(new URL("/login", req.nextUrl));
+  const pathname = req.nextUrl.pathname;
+  const publicPages = ["/login", "/register", "/register/workspace", "/register/invite", "/verify-email", "/forgot-password", "/reset-password"];
+  if (!req.auth && !publicPages.includes(pathname)) return NextResponse.redirect(new URL("/login", req.nextUrl));
+  if (req.auth && ["/login", "/register", "/register/workspace"].includes(pathname)) return NextResponse.redirect(new URL("/", req.nextUrl));
+  const response = NextResponse.next();
+  if (publicPages.includes(pathname)) {
+    response.headers.set("Referrer-Policy", "no-referrer");
+    response.headers.set("Cache-Control", "no-store");
+    response.headers.set("X-Robots-Tag", "noindex");
   }
-
-  // 2. If logged in but trying to access Login page -> Redirect to Dashboard
-  if (isLoggedIn && (isAuthPage || isPublicRegisterPage)) {
-    return NextResponse.redirect(new URL("/", req.nextUrl));
-  }
-
-  return NextResponse.next();
+  return response;
 });
-
-// 3. Define which routes trigger this guard
-export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
-};
+export const config = { matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"] };

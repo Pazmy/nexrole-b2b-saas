@@ -12,13 +12,15 @@ export async function getActiveUser(id?: string, tenantId?: string) {
     where: { id, tenantId, isActive: true },
     select: {
       id: true, email: true, tenantId: true,
+      emailVerifiedAt: true, sessionVersion: true,
       role: { select: { name: true } },
       tenant: { select: { name: true } },
     },
   });
-  if (!user || !isWorkspaceRole(user.role.name)) return null;
+  if (!user || !user.emailVerifiedAt || !isWorkspaceRole(user.role.name)) return null;
   return {
     id: user.id, email: user.email, tenantId: user.tenantId,
     role: user.role.name, name: user.tenant.name,
+    sessionVersion: user.sessionVersion,
   };
 }

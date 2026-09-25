@@ -4,7 +4,7 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
 
 ## Current document version: `V.1.3.0`
 
-## Last updated: `2026-09-20`
+## Last updated: `2026-09-21`
 
 ## MVP target and tracking rules
 
@@ -169,14 +169,24 @@ Keep scope, dependencies, and acceptance criteria here. Use issues or PRs for in
 
 #### Step 8.2: Complete onboarding and account recovery
 
-- [ ] Make `/register` a public entry point that redirects to or renders workspace registration, and link it from login. Reuse the existing `/register/workspace` implementation.
-- [ ] Apply shared server-side validation to registration, login, and invitation acceptance; normalize email before lookup and storage; handle duplicate accounts and concurrent submissions cleanly.
-- [ ] Add email verification, forgot/reset password, and authenticated change-password flows with expiring, single-use tokens and appropriate session invalidation.
-- [ ] Add abuse limits to login, registration, verification, and recovery endpoints. Avoid exposing account existence through recovery responses.
-- [ ] Configure transactional email and application base URL for verification, recovery, and invitations. Replace hardcoded localhost invitation links.
-- [ ] Provide pending, success, validation, expired-token, and retry states with plain user-facing language.
+- [x] Make `/register` a public entry point that redirects to or renders workspace registration, and link it from login. Reuse the existing `/register/workspace` implementation.
+- [x] Apply shared server-side validation to registration, login, and invitation acceptance; normalize email before lookup and storage; handle duplicate accounts and concurrent submissions cleanly.
+- [x] Add email verification, forgot/reset password, and authenticated change-password flows with expiring, single-use tokens and appropriate session invalidation.
+- [x] Add abuse limits to login, registration, verification, and recovery endpoints. Avoid exposing account existence through recovery responses.
+- [x] Configure transactional email and application base URL for verification, recovery, and invitations. Replace hardcoded localhost invitation links.
+- [x] Provide pending, success, validation, expired-token, and retry states with plain user-facing language.
 
 **Acceptance:** A new company onboards without seed data, verifies email, signs in, and recovers access. Invalid/expired/reused tokens fail safely; failed registration leaves no orphan tenant.
+
+**Implementation and evidence (2026-09-21):**
+
+- Added shared Zod validation, normalized-email database constraints, verification/reset token hashes, atomic token consumption, password-change session versions, and PostgreSQL-backed abuse limits. Existing accounts require verification; old sessions must sign in again. The migration aborts on normalized-email collisions rather than merging accounts and preserves existing invitation URLs by hashing their stored tokens.
+- Added local `.email-previews` delivery and a server-side Resend API sender. Production rejects preview mode and requires configured credentials, a sender, and an HTTPS application origin. Invites now use the same sender and origin configuration. Account creation survives delivery failures with a verification retry path.
+- `npm run test:access`: **16 passing**; `npm run test:accounts`: **6 passing**; `npm run test:accounts:db`: **13 passing** (12 lifecycle/migration subtests plus the parent suite), using actual PostgreSQL in an isolated schema. Covers seedless registration, duplicate races, expired/reused tokens, concurrent consumption, rate-limit atomicity, session invalidation, invitation scope, and failed delivery.
+- Local-preview Playwright lifecycle test: **1 passing** in Microsoft Edge, covering registration, verification, recovery, a second browser's session invalidation, password changes, invitations, and used-link rejection. The test deletes its temporary workspace and previews. Existing seeded tenant-isolation browser test was not run; migrated demo accounts require verification before that older suite can sign in.
+- Web lint, web TypeScript, database/API builds, and web production build passed. Windows verification used a separate `NEXT_BUILD_DIR` to avoid the existing cache ownership issue; the production build required network access for Google Fonts.
+- Applied the migration to the local development database after confirming its two existing accounts had no normalized-email collisions.
+- [ ] **External acceptance still pending:** configure a verified Resend domain and run the [final real-email setup and verification checklist](docs/ACCOUNT_SETUP.md#final-action-after-resend-is-ready-configure-and-verify-live-delivery). No real Resend email has been sent or verified in this implementation session.
 
 #### Step 8.3: Deliver the first useful transaction workflow
 

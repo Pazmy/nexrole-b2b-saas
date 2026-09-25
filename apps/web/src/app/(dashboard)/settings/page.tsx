@@ -52,6 +52,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
       </div>
 
       {/* TAB CONTROLLERS (URL-Driven Link Nodes) */}
+      <Link href="/settings/security" className="inline-block text-sm text-blue-400 hover:underline">Change password</Link>
       <div className="flex border-b border-zinc-800 gap-2">
         <Link
           href={`?tab=${Tabs.Profile}`}

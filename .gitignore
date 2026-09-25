@@ -5,6 +5,9 @@ node_modules/
 
 # Next.js build output
 /apps/web/.next/
+/apps/web/.next-*/
+/apps/web/test-results/
+/apps/web/playwright-report/
 /apps/web/out/
 
 # Express build output (if you compile TS to JS later)
@@ -23,3 +26,4 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.email-previews/

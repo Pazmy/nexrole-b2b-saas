@@ -7,14 +7,24 @@ import type * as Prisma from "../internal/prismaNamespace.js";
 export type UserModel = runtime.Types.Result.DefaultSelection<Prisma.$UserPayload>;
 export type AggregateUser = {
     _count: UserCountAggregateOutputType | null;
+    _avg: UserAvgAggregateOutputType | null;
+    _sum: UserSumAggregateOutputType | null;
     _min: UserMinAggregateOutputType | null;
     _max: UserMaxAggregateOutputType | null;
+};
+export type UserAvgAggregateOutputType = {
+    sessionVersion: number | null;
+};
+export type UserSumAggregateOutputType = {
+    sessionVersion: number | null;
 };
 export type UserMinAggregateOutputType = {
     id: string | null;
     email: string | null;
     passwordHash: string | null;
     isActive: boolean | null;
+    emailVerifiedAt: Date | null;
+    sessionVersion: number | null;
     tenantId: string | null;
     roleId: string | null;
     createdAt: Date | null;
@@ -25,6 +35,8 @@ export type UserMaxAggregateOutputType = {
     email: string | null;
     passwordHash: string | null;
     isActive: boolean | null;
+    emailVerifiedAt: Date | null;
+    sessionVersion: number | null;
     tenantId: string | null;
     roleId: string | null;
     createdAt: Date | null;
@@ -35,17 +47,27 @@ export type UserCountAggregateOutputType = {
     email: number;
     passwordHash: number;
     isActive: number;
+    emailVerifiedAt: number;
+    sessionVersion: number;
     tenantId: number;
     roleId: number;
     createdAt: number;
     updatedAt: number;
     _all: number;
 };
+export type UserAvgAggregateInputType = {
+    sessionVersion?: true;
+};
+export type UserSumAggregateInputType = {
+    sessionVersion?: true;
+};
 export type UserMinAggregateInputType = {
     id?: true;
     email?: true;
     passwordHash?: true;
     isActive?: true;
+    emailVerifiedAt?: true;
+    sessionVersion?: true;
     tenantId?: true;
     roleId?: true;
     createdAt?: true;
@@ -56,6 +78,8 @@ export type UserMaxAggregateInputType = {
     email?: true;
     passwordHash?: true;
     isActive?: true;
+    emailVerifiedAt?: true;
+    sessionVersion?: true;
     tenantId?: true;
     roleId?: true;
     createdAt?: true;
@@ -66,6 +90,8 @@ export type UserCountAggregateInputType = {
     email?: true;
     passwordHash?: true;
     isActive?: true;
+    emailVerifiedAt?: true;
+    sessionVersion?: true;
     tenantId?: true;
     roleId?: true;
     createdAt?: true;
@@ -110,6 +136,18 @@ export type UserAggregateArgs<ExtArgs extends runtime.Types.Extensions.InternalA
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      *
+     * Select which fields to average
+    **/
+    _avg?: UserAvgAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to sum
+    **/
+    _sum?: UserSumAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
      * Select which fields to find the minimum value
     **/
     _min?: UserMinAggregateInputType;
@@ -131,6 +169,8 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
     take?: number;
     skip?: number;
     _count?: UserCountAggregateInputType | true;
+    _avg?: UserAvgAggregateInputType;
+    _sum?: UserSumAggregateInputType;
     _min?: UserMinAggregateInputType;
     _max?: UserMaxAggregateInputType;
 };
@@ -139,11 +179,15 @@ export type UserGroupByOutputType = {
     email: string;
     passwordHash: string;
     isActive: boolean;
+    emailVerifiedAt: Date | null;
+    sessionVersion: number;
     tenantId: string;
     roleId: string;
     createdAt: Date;
     updatedAt: Date;
     _count: UserCountAggregateOutputType | null;
+    _avg: UserAvgAggregateOutputType | null;
+    _sum: UserSumAggregateOutputType | null;
     _min: UserMinAggregateOutputType | null;
     _max: UserMaxAggregateOutputType | null;
 };
@@ -158,10 +202,13 @@ export type UserWhereInput = {
     email?: Prisma.StringFilter<"User"> | string;
     passwordHash?: Prisma.StringFilter<"User"> | string;
     isActive?: Prisma.BoolFilter<"User"> | boolean;
+    emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+    sessionVersion?: Prisma.IntFilter<"User"> | number;
     tenantId?: Prisma.UuidFilter<"User"> | string;
     roleId?: Prisma.UuidFilter<"User"> | string;
     createdAt?: Prisma.DateTimeFilter<"User"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string;
+    accountTokens?: Prisma.AccountTokenListRelationFilter;
     tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>;
     role?: Prisma.XOR<Prisma.RoleScalarRelationFilter, Prisma.RoleWhereInput>;
     transactions?: Prisma.TransactionListRelationFilter;
@@ -171,10 +218,13 @@ export type UserOrderByWithRelationInput = {
     email?: Prisma.SortOrder;
     passwordHash?: Prisma.SortOrder;
     isActive?: Prisma.SortOrder;
+    emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+    sessionVersion?: Prisma.SortOrder;
     tenantId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+    accountTokens?: Prisma.AccountTokenOrderByRelationAggregateInput;
     tenant?: Prisma.TenantOrderByWithRelationInput;
     role?: Prisma.RoleOrderByWithRelationInput;
     transactions?: Prisma.TransactionOrderByRelationAggregateInput;
@@ -187,10 +237,13 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
     NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[];
     passwordHash?: Prisma.StringFilter<"User"> | string;
     isActive?: Prisma.BoolFilter<"User"> | boolean;
+    emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+    sessionVersion?: Prisma.IntFilter<"User"> | number;
     tenantId?: Prisma.UuidFilter<"User"> | string;
     roleId?: Prisma.UuidFilter<"User"> | string;
     createdAt?: Prisma.DateTimeFilter<"User"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string;
+    accountTokens?: Prisma.AccountTokenListRelationFilter;
     tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>;
     role?: Prisma.XOR<Prisma.RoleScalarRelationFilter, Prisma.RoleWhereInput>;
     transactions?: Prisma.TransactionListRelationFilter;
@@ -200,13 +253,17 @@ export type UserOrderByWithAggregationInput = {
     email?: Prisma.SortOrder;
     passwordHash?: Prisma.SortOrder;
     isActive?: Prisma.SortOrder;
+    emailVerifiedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+    sessionVersion?: Prisma.SortOrder;
     tenantId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
     _count?: Prisma.UserCountOrderByAggregateInput;
+    _avg?: Prisma.UserAvgOrderByAggregateInput;
     _max?: Prisma.UserMaxOrderByAggregateInput;
     _min?: Prisma.UserMinOrderByAggregateInput;
+    _sum?: Prisma.UserSumOrderByAggregateInput;
 };
 export type UserScalarWhereWithAggregatesInput = {
     AND?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[];
@@ -216,6 +273,8 @@ export type UserScalarWhereWithAggregatesInput = {
     email?: Prisma.StringWithAggregatesFilter<"User"> | string;
     passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string;
     isActive?: Prisma.BoolWithAggregatesFilter<"User"> | boolean;
+    emailVerifiedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null;
+    sessionVersion?: Prisma.IntWithAggregatesFilter<"User"> | number;
     tenantId?: Prisma.UuidWithAggregatesFilter<"User"> | string;
     roleId?: Prisma.UuidWithAggregatesFilter<"User"> | string;
     createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string;
@@ -226,8 +285,11 @@ export type UserCreateInput = {
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    accountTokens?: Prisma.AccountTokenCreateNestedManyWithoutUserInput;
     tenant: Prisma.TenantCreateNestedOneWithoutUsersInput;
     role: Prisma.RoleCreateNestedOneWithoutUsersInput;
     transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput;
@@ -237,10 +299,13 @@ export type UserUncheckedCreateInput = {
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     tenantId: string;
     roleId: string;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    accountTokens?: Prisma.AccountTokenUncheckedCreateNestedManyWithoutUserInput;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput;
 };
 export type UserUpdateInput = {
@@ -248,8 +313,11 @@ export type UserUpdateInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    accountTokens?: Prisma.AccountTokenUpdateManyWithoutUserNestedInput;
     tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput;
     role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput;
     transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput;
@@ -259,10 +327,13 @@ export type UserUncheckedUpdateInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     tenantId?: Prisma.StringFieldUpdateOperationsInput | string;
     roleId?: Prisma.StringFieldUpdateOperationsInput | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    accountTokens?: Prisma.AccountTokenUncheckedUpdateManyWithoutUserNestedInput;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type UserCreateManyInput = {
@@ -270,6 +341,8 @@ export type UserCreateManyInput = {
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     tenantId: string;
     roleId: string;
     createdAt?: Date | string;
@@ -280,6 +353,8 @@ export type UserUpdateManyMutationInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -288,6 +363,8 @@ export type UserUncheckedUpdateManyInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     tenantId?: Prisma.StringFieldUpdateOperationsInput | string;
     roleId?: Prisma.StringFieldUpdateOperationsInput | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -306,16 +383,23 @@ export type UserCountOrderByAggregateInput = {
     email?: Prisma.SortOrder;
     passwordHash?: Prisma.SortOrder;
     isActive?: Prisma.SortOrder;
+    emailVerifiedAt?: Prisma.SortOrder;
+    sessionVersion?: Prisma.SortOrder;
     tenantId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+};
+export type UserAvgOrderByAggregateInput = {
+    sessionVersion?: Prisma.SortOrder;
 };
 export type UserMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     email?: Prisma.SortOrder;
     passwordHash?: Prisma.SortOrder;
     isActive?: Prisma.SortOrder;
+    emailVerifiedAt?: Prisma.SortOrder;
+    sessionVersion?: Prisma.SortOrder;
     tenantId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
@@ -326,10 +410,15 @@ export type UserMinOrderByAggregateInput = {
     email?: Prisma.SortOrder;
     passwordHash?: Prisma.SortOrder;
     isActive?: Prisma.SortOrder;
+    emailVerifiedAt?: Prisma.SortOrder;
+    sessionVersion?: Prisma.SortOrder;
     tenantId?: Prisma.SortOrder;
     roleId?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+};
+export type UserSumOrderByAggregateInput = {
+    sessionVersion?: Prisma.SortOrder;
 };
 export type UserScalarRelationFilter = {
     is?: Prisma.UserWhereInput;
@@ -414,6 +503,16 @@ export type UserUncheckedUpdateManyWithoutRoleNestedInput = {
 export type BoolFieldUpdateOperationsInput = {
     set?: boolean;
 };
+export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null;
+};
+export type IntFieldUpdateOperationsInput = {
+    set?: number;
+    increment?: number;
+    decrement?: number;
+    multiply?: number;
+    divide?: number;
+};
 export type UserCreateNestedOneWithoutTransactionsInput = {
     create?: Prisma.XOR<Prisma.UserCreateWithoutTransactionsInput, Prisma.UserUncheckedCreateWithoutTransactionsInput>;
     connectOrCreate?: Prisma.UserCreateOrConnectWithoutTransactionsInput;
@@ -426,13 +525,28 @@ export type UserUpdateOneRequiredWithoutTransactionsNestedInput = {
     connect?: Prisma.UserWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTransactionsInput, Prisma.UserUpdateWithoutTransactionsInput>, Prisma.UserUncheckedUpdateWithoutTransactionsInput>;
 };
+export type UserCreateNestedOneWithoutAccountTokensInput = {
+    create?: Prisma.XOR<Prisma.UserCreateWithoutAccountTokensInput, Prisma.UserUncheckedCreateWithoutAccountTokensInput>;
+    connectOrCreate?: Prisma.UserCreateOrConnectWithoutAccountTokensInput;
+    connect?: Prisma.UserWhereUniqueInput;
+};
+export type UserUpdateOneRequiredWithoutAccountTokensNestedInput = {
+    create?: Prisma.XOR<Prisma.UserCreateWithoutAccountTokensInput, Prisma.UserUncheckedCreateWithoutAccountTokensInput>;
+    connectOrCreate?: Prisma.UserCreateOrConnectWithoutAccountTokensInput;
+    upsert?: Prisma.UserUpsertWithoutAccountTokensInput;
+    connect?: Prisma.UserWhereUniqueInput;
+    update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutAccountTokensInput, Prisma.UserUpdateWithoutAccountTokensInput>, Prisma.UserUncheckedUpdateWithoutAccountTokensInput>;
+};
 export type UserCreateWithoutTenantInput = {
     id?: string;
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    accountTokens?: Prisma.AccountTokenCreateNestedManyWithoutUserInput;
     role: Prisma.RoleCreateNestedOneWithoutUsersInput;
     transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput;
 };
@@ -441,9 +555,12 @@ export type UserUncheckedCreateWithoutTenantInput = {
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     roleId: string;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    accountTokens?: Prisma.AccountTokenUncheckedCreateNestedManyWithoutUserInput;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput;
 };
 export type UserCreateOrConnectWithoutTenantInput = {
@@ -475,6 +592,8 @@ export type UserScalarWhereInput = {
     email?: Prisma.StringFilter<"User"> | string;
     passwordHash?: Prisma.StringFilter<"User"> | string;
     isActive?: Prisma.BoolFilter<"User"> | boolean;
+    emailVerifiedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+    sessionVersion?: Prisma.IntFilter<"User"> | number;
     tenantId?: Prisma.UuidFilter<"User"> | string;
     roleId?: Prisma.UuidFilter<"User"> | string;
     createdAt?: Prisma.DateTimeFilter<"User"> | Date | string;
@@ -485,8 +604,11 @@ export type UserCreateWithoutRoleInput = {
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    accountTokens?: Prisma.AccountTokenCreateNestedManyWithoutUserInput;
     tenant: Prisma.TenantCreateNestedOneWithoutUsersInput;
     transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput;
 };
@@ -495,9 +617,12 @@ export type UserUncheckedCreateWithoutRoleInput = {
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     tenantId: string;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    accountTokens?: Prisma.AccountTokenUncheckedCreateNestedManyWithoutUserInput;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput;
 };
 export type UserCreateOrConnectWithoutRoleInput = {
@@ -526,8 +651,11 @@ export type UserCreateWithoutTransactionsInput = {
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    accountTokens?: Prisma.AccountTokenCreateNestedManyWithoutUserInput;
     tenant: Prisma.TenantCreateNestedOneWithoutUsersInput;
     role: Prisma.RoleCreateNestedOneWithoutUsersInput;
 };
@@ -536,10 +664,13 @@ export type UserUncheckedCreateWithoutTransactionsInput = {
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     tenantId: string;
     roleId: string;
     createdAt?: Date | string;
     updatedAt?: Date | string;
+    accountTokens?: Prisma.AccountTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 export type UserCreateOrConnectWithoutTransactionsInput = {
     where: Prisma.UserWhereUniqueInput;
@@ -559,8 +690,11 @@ export type UserUpdateWithoutTransactionsInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    accountTokens?: Prisma.AccountTokenUpdateManyWithoutUserNestedInput;
     tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput;
     role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput;
 };
@@ -569,16 +703,86 @@ export type UserUncheckedUpdateWithoutTransactionsInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     tenantId?: Prisma.StringFieldUpdateOperationsInput | string;
     roleId?: Prisma.StringFieldUpdateOperationsInput | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    accountTokens?: Prisma.AccountTokenUncheckedUpdateManyWithoutUserNestedInput;
+};
+export type UserCreateWithoutAccountTokensInput = {
+    id?: string;
+    email: string;
+    passwordHash: string;
+    isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    tenant: Prisma.TenantCreateNestedOneWithoutUsersInput;
+    role: Prisma.RoleCreateNestedOneWithoutUsersInput;
+    transactions?: Prisma.TransactionCreateNestedManyWithoutUserInput;
+};
+export type UserUncheckedCreateWithoutAccountTokensInput = {
+    id?: string;
+    email: string;
+    passwordHash: string;
+    isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
+    tenantId: string;
+    roleId: string;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutUserInput;
+};
+export type UserCreateOrConnectWithoutAccountTokensInput = {
+    where: Prisma.UserWhereUniqueInput;
+    create: Prisma.XOR<Prisma.UserCreateWithoutAccountTokensInput, Prisma.UserUncheckedCreateWithoutAccountTokensInput>;
+};
+export type UserUpsertWithoutAccountTokensInput = {
+    update: Prisma.XOR<Prisma.UserUpdateWithoutAccountTokensInput, Prisma.UserUncheckedUpdateWithoutAccountTokensInput>;
+    create: Prisma.XOR<Prisma.UserCreateWithoutAccountTokensInput, Prisma.UserUncheckedCreateWithoutAccountTokensInput>;
+    where?: Prisma.UserWhereInput;
+};
+export type UserUpdateToOneWithWhereWithoutAccountTokensInput = {
+    where?: Prisma.UserWhereInput;
+    data: Prisma.XOR<Prisma.UserUpdateWithoutAccountTokensInput, Prisma.UserUncheckedUpdateWithoutAccountTokensInput>;
+};
+export type UserUpdateWithoutAccountTokensInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    email?: Prisma.StringFieldUpdateOperationsInput | string;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
+    isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput;
+    role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput;
+    transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput;
+};
+export type UserUncheckedUpdateWithoutAccountTokensInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    email?: Prisma.StringFieldUpdateOperationsInput | string;
+    passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
+    isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
+    tenantId?: Prisma.StringFieldUpdateOperationsInput | string;
+    roleId?: Prisma.StringFieldUpdateOperationsInput | string;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type UserCreateManyTenantInput = {
     id?: string;
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     roleId: string;
     createdAt?: Date | string;
     updatedAt?: Date | string;
@@ -588,8 +792,11 @@ export type UserUpdateWithoutTenantInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    accountTokens?: Prisma.AccountTokenUpdateManyWithoutUserNestedInput;
     role?: Prisma.RoleUpdateOneRequiredWithoutUsersNestedInput;
     transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput;
 };
@@ -598,9 +805,12 @@ export type UserUncheckedUpdateWithoutTenantInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     roleId?: Prisma.StringFieldUpdateOperationsInput | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    accountTokens?: Prisma.AccountTokenUncheckedUpdateManyWithoutUserNestedInput;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type UserUncheckedUpdateManyWithoutTenantInput = {
@@ -608,6 +818,8 @@ export type UserUncheckedUpdateManyWithoutTenantInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     roleId?: Prisma.StringFieldUpdateOperationsInput | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -617,6 +829,8 @@ export type UserCreateManyRoleInput = {
     email: string;
     passwordHash: string;
     isActive?: boolean;
+    emailVerifiedAt?: Date | string | null;
+    sessionVersion?: number;
     tenantId: string;
     createdAt?: Date | string;
     updatedAt?: Date | string;
@@ -626,8 +840,11 @@ export type UserUpdateWithoutRoleInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    accountTokens?: Prisma.AccountTokenUpdateManyWithoutUserNestedInput;
     tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput;
     transactions?: Prisma.TransactionUpdateManyWithoutUserNestedInput;
 };
@@ -636,9 +853,12 @@ export type UserUncheckedUpdateWithoutRoleInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     tenantId?: Prisma.StringFieldUpdateOperationsInput | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    accountTokens?: Prisma.AccountTokenUncheckedUpdateManyWithoutUserNestedInput;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutUserNestedInput;
 };
 export type UserUncheckedUpdateManyWithoutRoleInput = {
@@ -646,6 +866,8 @@ export type UserUncheckedUpdateManyWithoutRoleInput = {
     email?: Prisma.StringFieldUpdateOperationsInput | string;
     passwordHash?: Prisma.StringFieldUpdateOperationsInput | string;
     isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    emailVerifiedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    sessionVersion?: Prisma.IntFieldUpdateOperationsInput | number;
     tenantId?: Prisma.StringFieldUpdateOperationsInput | string;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -654,9 +876,11 @@ export type UserUncheckedUpdateManyWithoutRoleInput = {
  * Count Type UserCountOutputType
  */
 export type UserCountOutputType = {
+    accountTokens: number;
     transactions: number;
 };
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    accountTokens?: boolean | UserCountOutputTypeCountAccountTokensArgs;
     transactions?: boolean | UserCountOutputTypeCountTransactionsArgs;
 };
 /**
@@ -671,6 +895,12 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountAccountTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.AccountTokenWhereInput;
+};
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountTransactionsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.TransactionWhereInput;
 };
@@ -679,10 +909,13 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
     email?: boolean;
     passwordHash?: boolean;
     isActive?: boolean;
+    emailVerifiedAt?: boolean;
+    sessionVersion?: boolean;
     tenantId?: boolean;
     roleId?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
+    accountTokens?: boolean | Prisma.User$accountTokensArgs<ExtArgs>;
     tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>;
     role?: boolean | Prisma.RoleDefaultArgs<ExtArgs>;
     transactions?: boolean | Prisma.User$transactionsArgs<ExtArgs>;
@@ -693,6 +926,8 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
     email?: boolean;
     passwordHash?: boolean;
     isActive?: boolean;
+    emailVerifiedAt?: boolean;
+    sessionVersion?: boolean;
     tenantId?: boolean;
     roleId?: boolean;
     createdAt?: boolean;
@@ -705,6 +940,8 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
     email?: boolean;
     passwordHash?: boolean;
     isActive?: boolean;
+    emailVerifiedAt?: boolean;
+    sessionVersion?: boolean;
     tenantId?: boolean;
     roleId?: boolean;
     createdAt?: boolean;
@@ -717,13 +954,16 @@ export type UserSelectScalar = {
     email?: boolean;
     passwordHash?: boolean;
     isActive?: boolean;
+    emailVerifiedAt?: boolean;
+    sessionVersion?: boolean;
     tenantId?: boolean;
     roleId?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
 };
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "isActive" | "tenantId" | "roleId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>;
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "isActive" | "emailVerifiedAt" | "sessionVersion" | "tenantId" | "roleId" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>;
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    accountTokens?: boolean | Prisma.User$accountTokensArgs<ExtArgs>;
     tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>;
     role?: boolean | Prisma.RoleDefaultArgs<ExtArgs>;
     transactions?: boolean | Prisma.User$transactionsArgs<ExtArgs>;
@@ -740,6 +980,7 @@ export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     name: "User";
     objects: {
+        accountTokens: Prisma.$AccountTokenPayload<ExtArgs>[];
         tenant: Prisma.$TenantPayload<ExtArgs>;
         role: Prisma.$RolePayload<ExtArgs>;
         transactions: Prisma.$TransactionPayload<ExtArgs>[];
@@ -749,6 +990,8 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
         email: string;
         passwordHash: string;
         isActive: boolean;
+        emailVerifiedAt: Date | null;
+        sessionVersion: number;
         tenantId: string;
         roleId: string;
         createdAt: Date;
@@ -1082,6 +1325,7 @@ export interface UserDelegate<ExtArgs extends runtime.Types.Extensions.InternalA
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise";
+    accountTokens<T extends Prisma.User$accountTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$accountTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AccountTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     tenant<T extends Prisma.TenantDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantDefaultArgs<ExtArgs>>): Prisma.Prisma__TenantClient<runtime.Types.Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     role<T extends Prisma.RoleDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.RoleDefaultArgs<ExtArgs>>): Prisma.Prisma__RoleClient<runtime.Types.Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>;
     transactions<T extends Prisma.User$transactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
@@ -1114,6 +1358,8 @@ export interface UserFieldRefs {
     readonly email: Prisma.FieldRef<"User", 'String'>;
     readonly passwordHash: Prisma.FieldRef<"User", 'String'>;
     readonly isActive: Prisma.FieldRef<"User", 'Boolean'>;
+    readonly emailVerifiedAt: Prisma.FieldRef<"User", 'DateTime'>;
+    readonly sessionVersion: Prisma.FieldRef<"User", 'Int'>;
     readonly tenantId: Prisma.FieldRef<"User", 'String'>;
     readonly roleId: Prisma.FieldRef<"User", 'String'>;
     readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>;
@@ -1500,6 +1746,29 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
      * Limit how many Users to delete.
      */
     limit?: number;
+};
+/**
+ * User.accountTokens
+ */
+export type User$accountTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AccountToken
+     */
+    select?: Prisma.AccountTokenSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the AccountToken
+     */
+    omit?: Prisma.AccountTokenOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.AccountTokenInclude<ExtArgs> | null;
+    where?: Prisma.AccountTokenWhereInput;
+    orderBy?: Prisma.AccountTokenOrderByWithRelationInput | Prisma.AccountTokenOrderByWithRelationInput[];
+    cursor?: Prisma.AccountTokenWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.AccountTokenScalarFieldEnum | Prisma.AccountTokenScalarFieldEnum[];
 };
 /**
  * User.transactions

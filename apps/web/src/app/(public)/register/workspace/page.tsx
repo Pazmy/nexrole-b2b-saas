@@ -20,17 +20,17 @@ export default function RegisterWorkspacePage() {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-950 border border-emerald-800 text-emerald-400">
             ✓
           </div>
-          <h1 className="text-2xl font-bold">Enterprise Primed!</h1>
+          <h1 className="text-2xl font-bold">Check your email</h1>
           <p className="text-sm text-zinc-400">
-            Your multi-tenant company container and administrator profile have
-            been successfully deployed.
+            {state.message}
           </p>
           <Link
             href="/login"
             className="inline-flex w-full h-9 items-center justify-center rounded-md bg-blue-600 hover:bg-blue-700 text-sm font-medium transition-colors"
           >
-            Sign In to Console
+            Sign in
           </Link>
+          <Link href="/verify-email" className="block text-sm text-blue-400">Resend verification</Link>
         </div>
       </div>
     );
@@ -42,7 +42,7 @@ export default function RegisterWorkspacePage() {
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">NexRole</h1>
           <p className="mt-2 text-sm text-zinc-400">
-            Deploy a fresh multi-tenant company instance
+            Create your company workspace
           </p>
         </div>
 
@@ -87,6 +87,8 @@ export default function RegisterWorkspacePage() {
               <Input
                 name="password"
                 type="password"
+                minLength={12}
+                autoComplete="new-password"
                 placeholder="••••••••"
                 className="pl-9 bg-zinc-950 border-zinc-800 text-white placeholder-zinc-600"
                 required
@@ -94,6 +96,7 @@ export default function RegisterWorkspacePage() {
             </div>
           </div>
 
+          <p className="text-xs text-zinc-400">Use a password with at least 12 characters (at most 72 bytes).</p>
           {state?.error && (
             <p className="text-xs font-medium text-red-400 bg-red-950/30 border border-red-900/40 p-2.5 rounded-lg">
               {state.error}
@@ -105,13 +108,13 @@ export default function RegisterWorkspacePage() {
             disabled={isPending}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium gap-2"
           >
-            {isPending ? "Provisioning..." : "Launch Core Instance"}
+            {isPending ? "Creating workspace..." : "Create workspace"}
             <ArrowRight className="h-4 w-4" />
           </Button>
         </form>
 
         <p className="text-center text-xs text-zinc-500">
-          Already have an operational workspace?{" "}
+          Already have a workspace?{" "}
           <Link href="/login" className="text-blue-400 hover:underline">
             Sign In
           </Link>

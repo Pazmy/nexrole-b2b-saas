@@ -74,7 +74,9 @@ export const ModelName = {
     Invitation: 'Invitation',
     ApiKey: 'ApiKey',
     AuditLog: 'AuditLog',
-    ProcessedStripeEvent: 'ProcessedStripeEvent'
+    ProcessedStripeEvent: 'ProcessedStripeEvent',
+    AccountToken: 'AccountToken',
+    AuthRateLimit: 'AuthRateLimit'
 };
 /**
  * Enums
@@ -105,6 +107,8 @@ export const UserScalarFieldEnum = {
     email: 'email',
     passwordHash: 'passwordHash',
     isActive: 'isActive',
+    emailVerifiedAt: 'emailVerifiedAt',
+    sessionVersion: 'sessionVersion',
     tenantId: 'tenantId',
     roleId: 'roleId',
     createdAt: 'createdAt',
@@ -150,6 +154,18 @@ export const AuditLogScalarFieldEnum = {
 export const ProcessedStripeEventScalarFieldEnum = {
     id: 'id',
     createdAt: 'createdAt'
+};
+export const AccountTokenScalarFieldEnum = {
+    tokenHash: 'tokenHash',
+    userId: 'userId',
+    purpose: 'purpose',
+    sessionVersion: 'sessionVersion',
+    expiresAt: 'expiresAt'
+};
+export const AuthRateLimitScalarFieldEnum = {
+    key: 'key',
+    count: 'count',
+    expiresAt: 'expiresAt'
 };
 export const SortOrder = {
     asc: 'asc',

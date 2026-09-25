@@ -70,7 +70,7 @@ services:
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://${DOCKER_DB_USER:-postgres}:${DOCKER_DB_PASSWORD:-enterprise_secure_password}@postgres_db:5432/${DOCKER_DB_NAME:-nexrole_production}?schema=public
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?Set the public HTTPS application URL}
       EXPRESS_API_URL: http://api_server:5000
       AUTH_SECRET: ${DOCKER_AUTH_SECRET:-super_secure_nextauth_secret_token_string_32}
       AUTH_TRUST_HOST: "true"
@@ -78,6 +78,10 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?Set STRIPE_WEBHOOK_SECRET in the root .env}
       STRIPE_PRO_PRICE_ID: ${STRIPE_PRO_PRICE_ID:?Set STRIPE_PRO_PRICE_ID in the root .env}
       SKIP_ENV_VALIDATION: "false"
+      EMAIL_MODE: ${EMAIL_MODE:-resend}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      RATE_LIMIT_IP_HEADER: ${RATE_LIMIT_IP_HEADER:-}
     depends_on:
       db_init:
         condition: service_completed_successfully

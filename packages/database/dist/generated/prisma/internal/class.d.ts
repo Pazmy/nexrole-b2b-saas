@@ -205,5 +205,27 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
     get processedStripeEvent(): Prisma.ProcessedStripeEventDelegate<ExtArgs, {
         omit: OmitOpts;
     }>;
+    /**
+     * `prisma.accountToken`: Exposes CRUD operations for the **AccountToken** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more AccountTokens
+      * const accountTokens = await prisma.accountToken.findMany()
+      * ```
+      */
+    get accountToken(): Prisma.AccountTokenDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
+     * `prisma.authRateLimit`: Exposes CRUD operations for the **AuthRateLimit** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more AuthRateLimits
+      * const authRateLimits = await prisma.authRateLimit.findMany()
+      * ```
+      */
+    get authRateLimit(): Prisma.AuthRateLimitDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
 }
 export declare function getPrismaClientClass(): PrismaClientConstructor;

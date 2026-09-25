@@ -1,3 +1,2 @@
-export default function RegisterPage() {
-  return null;
-}
+import { redirect } from "next/navigation";
+export default function RegisterPage() { redirect("/register/workspace"); }

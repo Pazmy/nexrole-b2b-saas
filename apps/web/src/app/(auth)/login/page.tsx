@@ -16,11 +16,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-
-const loginSchema = z.object({
-  email: z.email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
+import Link from "next/link";
+import { loginSchema } from "@/lib/account-validation";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -37,17 +34,21 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setError(null);
 
-    const result = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false, // We handle redirection manually
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError("Invalid email or password");
-    } else {
-      router.push("/"); // Go to dashboard
-      router.refresh();
+      if (result?.error) {
+        setError("Unable to sign in. Check your email and password, verify your email, or wait 15 minutes if you have tried repeatedly.");
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    } catch {
+      setError("Unable to sign in right now. Please try again.");
     }
   }
 
@@ -103,12 +104,18 @@ export default function LoginPage() {
 
             <Button
               type="submit"
+              disabled={form.formState.isSubmitting}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
-              Sign In
+              {form.formState.isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </Form>
+        <nav className="flex flex-wrap gap-4 text-sm text-blue-400">
+          <Link href="/register">Create a workspace</Link>
+          <Link href="/forgot-password">Forgot password</Link>
+          <Link href="/verify-email">Resend verification</Link>
+        </nav>
       </div>
     </div>
   );

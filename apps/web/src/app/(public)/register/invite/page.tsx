@@ -1,9 +1,8 @@
 import { prisma } from "@nexrole/database";
-import bcrypt from "bcryptjs";
-import { redirect } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ShieldCheck, UserPlus } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import { hashToken } from "@/lib/accounts";
+import { tokenSchema } from "@/lib/account-validation";
+import InviteAcceptanceForm from "./invite-acceptance-form";
 
 interface InvitePageProps {
   searchParams: Promise<{ token?: string }>;
@@ -13,60 +12,33 @@ export default async function ProcessInvitePage({
   searchParams,
 }: InvitePageProps) {
   const resolvedParams = await searchParams;
-  const token = resolvedParams.token;
+  const parsed = tokenSchema.safeParse(resolvedParams.token);
+  const token = parsed.success ? parsed.data : null;
 
   if (!token) {
     return renderFailureCard(
-      "Missing Authorization Token",
-      "A valid secure token parameter must be passed inside the routing context URL.",
+      "This invitation is no longer available",
+      "The invitation link is missing or invalid. Ask your workspace administrator for a new invitation.",
     );
   }
 
-  // 1. Look up invitation parameters inside database logs
+  // Only the hash is stored; the raw token stays in the invitation link.
   const invite = await prisma.invitation.findUnique({
-    where: { token },
+    where: { token: hashToken(token) },
   });
 
-  if (!invite || invite.expiresAt < new Date()) {
+  if (!invite || invite.expiresAt <= new Date()) {
     return renderFailureCard(
-      "Expired or Invalid Token",
-      "This workspace invitation token signature is unrecognized or expired.",
+      "This invitation is no longer available",
+      "It may be expired or already used. Ask your workspace administrator for a new invitation.",
     );
   }
 
   // Fetch tenant information context to present to the user
   const tenant = await prisma.tenant.findUnique({
     where: { id: invite.tenantId },
+    select: { name: true },
   });
-
-  // 2. Process Registration Completion using inline server configurations
-  async function submitInviteRegistration(formData: FormData) {
-    "use server";
-    const password = formData.get("password") as string;
-    const incomingToken = formData.get("token") as string;
-
-    const activeInvite = await prisma.invitation.findUnique({
-      where: { token: incomingToken },
-    });
-    if (!activeInvite || activeInvite.expiresAt < new Date())
-      throw new Error("Token expired");
-
-    const encryptedPassword = await bcrypt.hash(password, 10);
-
-    await prisma.$transaction([
-      prisma.user.create({
-        data: {
-          email: activeInvite.email,
-          passwordHash: encryptedPassword,
-          tenantId: activeInvite.tenantId,
-          roleId: activeInvite.roleId,
-        },
-      }),
-      prisma.invitation.delete({ where: { token: incomingToken } }), // Consume invitation token
-    ]);
-
-    redirect("/login");
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4 text-white">
@@ -82,41 +54,7 @@ export default async function ProcessInvitePage({
           </p>
         </div>
 
-        <form action={submitInviteRegistration} className="space-y-4">
-          <input type="hidden" name="token" value={token} />
-
-          <div className="space-y-1.5">
-            <label className="text-xs text-zinc-400 font-medium uppercase">
-              Your Account Email
-            </label>
-            <Input
-              value={invite.email}
-              disabled
-              className="bg-zinc-950 border-zinc-800 text-zinc-500 disabled:opacity-100 font-mono text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs text-zinc-400 font-medium uppercase">
-              Account Password
-            </label>
-            <Input
-              name="password"
-              type="password"
-              placeholder="Choose a password"
-              required
-              className="bg-zinc-950 border-zinc-800 text-white placeholder-zinc-700"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full bg-blue-600 hover:bg-blue-700 font-medium gap-2 text-white"
-          >
-            <UserPlus className="h-4 w-4" />
-            Complete Workspace Enrollment
-          </Button>
-        </form>
+        <InviteAcceptanceForm token={token} email={invite.email} />
       </div>
     </div>
   );

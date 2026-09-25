@@ -4,6 +4,8 @@ Nexrole is a modern, multi-tenant B2B SaaS application boilerplate configured as
 
 For MVP scope, implementation priorities, and release acceptance criteria, see [BUILD_PLAN.md](BUILD_PLAN.md#phase-8-mvp-workflow-completion--release-acceptance). Phase 8 tracks remaining work; earlier phases describe the existing foundation.
 
+For onboarding, local email previews, existing-account verification, and the final Resend setup checklist, see [Account setup and verification](docs/ACCOUNT_SETUP.md).
+
 ---
 
 ## 🚀 Architecture Overview

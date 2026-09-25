@@ -6,4 +6,6 @@ export type * from './models/Invitation.js';
 export type * from './models/ApiKey.js';
 export type * from './models/AuditLog.js';
 export type * from './models/ProcessedStripeEvent.js';
+export type * from './models/AccountToken.js';
+export type * from './models/AuthRateLimit.js';
 export type * from './commonInputTypes.js';

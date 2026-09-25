@@ -13,6 +13,6 @@ export class AccessDeniedError extends Error {
 export async function requirePermission(permission: Permission) {
   const session = await auth();
   const user = await getActiveUser(session?.user?.id, session?.user?.tenantId);
-  if (!user || !hasPermission(user.role, permission)) throw new AccessDeniedError();
+  if (!user || user.sessionVersion !== session?.user?.sessionVersion || !hasPermission(user.role, permission)) throw new AccessDeniedError();
   return user;
 }

@@ -239,6 +239,8 @@ export declare const ModelName: {
     readonly ApiKey: "ApiKey";
     readonly AuditLog: "AuditLog";
     readonly ProcessedStripeEvent: "ProcessedStripeEvent";
+    readonly AccountToken: "AccountToken";
+    readonly AuthRateLimit: "AuthRateLimit";
 };
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
 export interface TypeMapCb<GlobalOmitOptions = {}> extends runtime.Types.Utils.Fn<{
@@ -251,7 +253,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         omit: GlobalOmitOptions;
     };
     meta: {
-        modelProps: "tenant" | "role" | "user" | "transaction" | "invitation" | "apiKey" | "auditLog" | "processedStripeEvent";
+        modelProps: "tenant" | "role" | "user" | "transaction" | "invitation" | "apiKey" | "auditLog" | "processedStripeEvent" | "accountToken" | "authRateLimit";
         txIsolationLevel: TransactionIsolationLevel;
     };
     model: {
@@ -847,6 +849,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
                 };
             };
         };
+        AccountToken: {
+            payload: Prisma.$AccountTokenPayload<ExtArgs>;
+            fields: Prisma.AccountTokenFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.AccountTokenFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.AccountTokenFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload>;
+                };
+                findFirst: {
+                    args: Prisma.AccountTokenFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.AccountTokenFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload>;
+                };
+                findMany: {
+                    args: Prisma.AccountTokenFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload>[];
+                };
+                create: {
+                    args: Prisma.AccountTokenCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload>;
+                };
+                createMany: {
+                    args: Prisma.AccountTokenCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.AccountTokenCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload>[];
+                };
+                delete: {
+                    args: Prisma.AccountTokenDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload>;
+                };
+                update: {
+                    args: Prisma.AccountTokenUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.AccountTokenDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.AccountTokenUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.AccountTokenUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload>[];
+                };
+                upsert: {
+                    args: Prisma.AccountTokenUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AccountTokenPayload>;
+                };
+                aggregate: {
+                    args: Prisma.AccountTokenAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateAccountToken>;
+                };
+                groupBy: {
+                    args: Prisma.AccountTokenGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AccountTokenGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.AccountTokenCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AccountTokenCountAggregateOutputType> | number;
+                };
+            };
+        };
+        AuthRateLimit: {
+            payload: Prisma.$AuthRateLimitPayload<ExtArgs>;
+            fields: Prisma.AuthRateLimitFieldRefs;
+            operations: {
+                findUnique: {
+                    args: Prisma.AuthRateLimitFindUniqueArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload> | null;
+                };
+                findUniqueOrThrow: {
+                    args: Prisma.AuthRateLimitFindUniqueOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload>;
+                };
+                findFirst: {
+                    args: Prisma.AuthRateLimitFindFirstArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload> | null;
+                };
+                findFirstOrThrow: {
+                    args: Prisma.AuthRateLimitFindFirstOrThrowArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload>;
+                };
+                findMany: {
+                    args: Prisma.AuthRateLimitFindManyArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload>[];
+                };
+                create: {
+                    args: Prisma.AuthRateLimitCreateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload>;
+                };
+                createMany: {
+                    args: Prisma.AuthRateLimitCreateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                createManyAndReturn: {
+                    args: Prisma.AuthRateLimitCreateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload>[];
+                };
+                delete: {
+                    args: Prisma.AuthRateLimitDeleteArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload>;
+                };
+                update: {
+                    args: Prisma.AuthRateLimitUpdateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload>;
+                };
+                deleteMany: {
+                    args: Prisma.AuthRateLimitDeleteManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateMany: {
+                    args: Prisma.AuthRateLimitUpdateManyArgs<ExtArgs>;
+                    result: BatchPayload;
+                };
+                updateManyAndReturn: {
+                    args: Prisma.AuthRateLimitUpdateManyAndReturnArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload>[];
+                };
+                upsert: {
+                    args: Prisma.AuthRateLimitUpsertArgs<ExtArgs>;
+                    result: runtime.Types.Utils.PayloadToResult<Prisma.$AuthRateLimitPayload>;
+                };
+                aggregate: {
+                    args: Prisma.AuthRateLimitAggregateArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AggregateAuthRateLimit>;
+                };
+                groupBy: {
+                    args: Prisma.AuthRateLimitGroupByArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AuthRateLimitGroupByOutputType>[];
+                };
+                count: {
+                    args: Prisma.AuthRateLimitCountArgs<ExtArgs>;
+                    result: runtime.Types.Utils.Optional<Prisma.AuthRateLimitCountAggregateOutputType> | number;
+                };
+            };
+        };
     };
 } & {
     other: {
@@ -903,6 +1053,8 @@ export declare const UserScalarFieldEnum: {
     readonly email: "email";
     readonly passwordHash: "passwordHash";
     readonly isActive: "isActive";
+    readonly emailVerifiedAt: "emailVerifiedAt";
+    readonly sessionVersion: "sessionVersion";
     readonly tenantId: "tenantId";
     readonly roleId: "roleId";
     readonly createdAt: "createdAt";
@@ -955,6 +1107,20 @@ export declare const ProcessedStripeEventScalarFieldEnum: {
     readonly createdAt: "createdAt";
 };
 export type ProcessedStripeEventScalarFieldEnum = (typeof ProcessedStripeEventScalarFieldEnum)[keyof typeof ProcessedStripeEventScalarFieldEnum];
+export declare const AccountTokenScalarFieldEnum: {
+    readonly tokenHash: "tokenHash";
+    readonly userId: "userId";
+    readonly purpose: "purpose";
+    readonly sessionVersion: "sessionVersion";
+    readonly expiresAt: "expiresAt";
+};
+export type AccountTokenScalarFieldEnum = (typeof AccountTokenScalarFieldEnum)[keyof typeof AccountTokenScalarFieldEnum];
+export declare const AuthRateLimitScalarFieldEnum: {
+    readonly key: "key";
+    readonly count: "count";
+    readonly expiresAt: "expiresAt";
+};
+export type AuthRateLimitScalarFieldEnum = (typeof AuthRateLimitScalarFieldEnum)[keyof typeof AuthRateLimitScalarFieldEnum];
 export declare const SortOrder: {
     readonly asc: "asc";
     readonly desc: "desc";
@@ -1017,6 +1183,14 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>;
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>;
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>;
+/**
  * Reference to a field of type 'Decimal'
  */
 export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>;
@@ -1025,13 +1199,13 @@ export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
  */
 export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>;
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'Float'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>;
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>;
 /**
- * Reference to a field of type 'Int[]'
+ * Reference to a field of type 'Float[]'
  */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>;
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>;
 /**
  * Batch Payload for updateMany & deleteMany & createMany
  */
@@ -1149,6 +1323,8 @@ export type GlobalOmitConfig = {
     apiKey?: Prisma.ApiKeyOmit;
     auditLog?: Prisma.AuditLogOmit;
     processedStripeEvent?: Prisma.ProcessedStripeEventOmit;
+    accountToken?: Prisma.AccountTokenOmit;
+    authRateLimit?: Prisma.AuthRateLimitOmit;
 };
 export type LogLevel = 'info' | 'query' | 'warn' | 'error';
 export type LogDefinition = {

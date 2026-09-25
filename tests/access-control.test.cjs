@@ -22,6 +22,7 @@ const userId = "33333333-3333-4333-8333-333333333333";
 let session, user, keys, writes, stripeCalls, config, transactionScopes;
 const match = (row, where) => Object.entries(where).every(([k, v]) => row[k] === v);
 const prisma = {
+  $queryRaw: async () => [{ count: 1 }],
   user: {
     findFirst: async ({ where }) => user && match(user, where) ? user : null,
     findUnique: async ({ where }) => user && match(user, where) ? user : null,
@@ -57,6 +58,7 @@ const logger = { info() {}, error() {}, warn() {} };
 const originalLoad = Module._load;
 Module._load = function (request, parent, isMain) {
   if (request === "server-only") return {};
+  if (request === "@/lib/email" || request === "./email") return { sendAccountEmail: async () => {} };
   if (request === "@nexrole/database") return { prisma };
   if (request === "next-auth") return (options) => { config = options; return { auth: async () => session }; };
   if (request === "next-auth/providers/credentials") return (options) => options;
@@ -74,6 +76,8 @@ Module._load = function (request, parent, isMain) {
   return originalLoad.call(this, request, parent, isMain);
 };
 process.env.STRIPE_SECRET_KEY = "test-only";
+process.env.EMAIL_MODE = "preview";
+process.env.NODE_ENV = "test";
 const { requirePermission } = require("../apps/web/src/lib/authorization.ts");
 const { hasPermission } = require("../apps/web/src/lib/permissions.ts");
 const { generateApiKey, revokeApiKey } = require("../apps/web/src/app/(dashboard)/settings/developer-action.ts");
@@ -84,8 +88,8 @@ const { app } = require("../apps/api/app.ts");
 const bcrypt = require("bcryptjs");
 
 beforeEach(() => {
-  session = { user: { id: userId, tenantId: tenantA, role: "SuperAdmin" } };
-  user = { id: userId, tenantId: tenantA, email: "admin@example.test", isActive: true,
+  session = { user: { id: userId, tenantId: tenantA, role: "SuperAdmin", sessionVersion: 0 } };
+  user = { id: userId, tenantId: tenantA, email: "admin@example.test", isActive: true, emailVerifiedAt: new Date(), sessionVersion: 0,
     role: { name: "SuperAdmin" }, tenant: { name: "Workspace" }, passwordHash: bcrypt.hashSync("test-password", 4) };
   keys = [{ id: "foreign-key", tenantId: tenantB, key: "foreign-hash", name: "Other workspace" }];
   writes = []; stripeCalls = []; transactionScopes = [];
@@ -148,7 +152,7 @@ test("credential login rejects inactive accounts and authenticates active accoun
 });
 
 test("Auth.js refreshes roles and invalidates existing JWTs after deactivation or tenant change", async () => {
-  const token = { sub: userId, tenantId: tenantA, role: "SuperAdmin" };
+  const token = { sub: userId, tenantId: tenantA, role: "SuperAdmin", sessionVersion: 0 };
   user.role.name = "Member";
   assert.equal((await config.callbacks.jwt({ token })).role, "Member");
   const refreshed = await config.callbacks.session({ session: { user: {} }, token });
