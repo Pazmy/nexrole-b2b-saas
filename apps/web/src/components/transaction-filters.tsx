@@ -1,24 +1,26 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { TRANSACTION_SEARCH_LIMIT } from "@/lib/transaction-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 
-export default function TransactionFilters() {
+export default function TransactionFilters({ initialSearch, initialStatus }: { initialSearch: string; initialStatus: string }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   // 1. Initialize local state from current URL params
-  const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [status, setStatus] = useState(searchParams.get("status") || "all");
+  const [search, setSearch] = useState(initialSearch);
+  const [status, setStatus] = useState(initialStatus);
+  const [pending, startTransition] = useTransition();
 
   // 2. Form submission updates the URL query string parameters
   const applyFilters = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams();
 
     if (search) {
       params.set("search", search);
@@ -33,25 +35,29 @@ export default function TransactionFilters() {
     }
 
     params.set("page", "1"); // Reset context window to page 1 on search
-    router.push(`${pathname}?${params.toString()}`);
+    startTransition(() => router.push(`${pathname}?${params.toString()}`));
   };
 
   // 3. Reset all variables back to default clean states
   const clearFilters = () => {
     setSearch("");
     setStatus("all");
-    router.push(pathname);
+    startTransition(() => router.push(pathname));
   };
 
   return (
     <form
       onSubmit={applyFilters}
+      aria-busy={pending}
       className="flex flex-col md:flex-row items-center gap-4 border border-zinc-850 bg-zinc-900/50 p-4 rounded-xl mb-6"
     >
       <div className="relative flex-1 w-full">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
         <Input
           placeholder="Search by description..."
+          aria-label="Search by description"
+          maxLength={TRANSACTION_SEARCH_LIMIT}
+          disabled={pending}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 bg-zinc-950 border-zinc-800 text-white placeholder-zinc-500 focus-visible:ring-1 focus-visible:ring-zinc-700"
@@ -60,6 +66,8 @@ export default function TransactionFilters() {
 
       <div className="flex w-full md:w-auto items-center gap-3">
         <select
+          aria-label="Filter by status"
+          disabled={pending}
           value={status}
           onChange={(e) => setStatus(e.target.value)}
           className="h-9 w-full md:w-40 rounded-md border border-zinc-800 bg-zinc-950 px-3 text-sm text-zinc-300 focus:outline-none focus:ring-1 focus:ring-zinc-700 cursor-pointer"
@@ -72,11 +80,12 @@ export default function TransactionFilters() {
 
         <Button
           type="submit"
+          disabled={pending}
           size="sm"
           className="bg-blue-600 hover:bg-blue-700 text-white font-medium gap-2"
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
-          Apply
+          {pending ? "Applying..." : "Apply"}
         </Button>
 
         {(searchParams.get("search") || searchParams.get("status")) && (
@@ -85,6 +94,7 @@ export default function TransactionFilters() {
             variant="ghost"
             size="sm"
             onClick={clearFilters}
+            disabled={pending}
             className="text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 gap-1"
           >
             <X className="h-3.5 w-3.5" />

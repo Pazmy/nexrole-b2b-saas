@@ -16,7 +16,9 @@
     "test:e2e": "npm run test:e2e -w apps/web",
     "test:access": "node --test tests/access-control.test.cjs",
     "test:accounts": "node --test tests/accounts.test.cjs",
-    "test:accounts:db": "node --test tests/accounts-db.test.cjs"
+    "test:accounts:db": "node --test tests/accounts-db.test.cjs",
+    "test:transactions:rules": "node --test tests/transaction-rules.test.cjs",
+    "test:transactions:db": "node --test tests/transactions-db.test.cjs"
   },
   "engines": {
     "node": ">=22.15.0"

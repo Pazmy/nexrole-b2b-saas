@@ -1,71 +1,47 @@
+import "dotenv/config";
 import { test, expect } from "@playwright/test";
+import pg from "pg";
+import bcrypt from "bcryptjs";
+import { randomUUID } from "node:crypto";
 
-test.describe("B2B SaaS Multi-Tenant Boundary Controls", () => {
-  test("should enforce absolute data isolation between Tenant A and Tenant B", async ({
-    browser,
-  }) => {
-    // ------------------------------------------------------------------------
-    // LAYER 1: ASSESSMENT OF TENANT A (Sensei Corp Profile)
-    // ------------------------------------------------------------------------
-    // Create an entirely isolated browser window context (simulates a clean user machine)
-    const contextA = await browser.newContext();
-    const pageA = await contextA.newPage();
-
-    // 1. Navigate to portal login
-    await pageA.goto("/login");
-    await pageA.fill('input[type="email"]', "admin@sensei.com");
-    await pageA.fill('input[type="password"]', "admin123");
-    await pageA.click('button[type="submit"]');
-
-    // 2. Wait for landing dashboard completion parameters
-    await expect(pageA.locator("text=Dashboard Overview")).toBeVisible({
-      timeout: 10000,
-    });
-
-    // 3. Navigate directly to operational ledger logs
-    await pageA.goto("/transactions");
-    await expect(pageA.locator("text=Ledger Operations")).toBeVisible();
-
-    // 4. Confirm Tenant A's seed data text is explicitly present
-    const tenantADataText = "B2B Custom Integration Advisory Services";
-    await expect(pageA.locator(`text=${tenantADataText}`)).toBeVisible();
-
-    console.log(
-      "✅ Tenant A data validation verified inside Sensei Corp workspace layout.",
-    );
-
-    // ------------------------------------------------------------------------
-    // LAYER 2: ASSESSMENT OF TENANT B (Glowstone Profile)
-    // ------------------------------------------------------------------------
-    // Spin up a completely separate, concurrent context (simulates another company logging in at the same time)
-    const contextB = await browser.newContext();
-    const pageB = await contextB.newPage();
-
-    // 1. Authenticate as a completely different company tenant profile
-    await pageB.goto("/login");
-    await pageB.fill('input[type="email"]', "admin@glowstone.io");
-    await pageB.fill('input[type="password"]', "admin123");
-    await pageB.click('button[type="submit"]');
-
-    // 2. Wait for confirmation landing
-    await expect(pageB.locator("text=Dashboard Overview")).toBeVisible({
-      timeout: 10000,
-    });
-
-    // 3. Route to the ledger viewport
-    await pageB.goto("/transactions");
-    await expect(pageB.locator("text=Ledger Operations")).toBeVisible();
-
-    // 4. HARD COMPLIANCE SECURITY CHECK: Ensure Tenant A's private string NEVER leaks into Tenant B's workspace
-    const leakedElement = pageB.locator(`text=${tenantADataText}`);
-    await expect(leakedElement).not.toBeVisible();
-
-    console.log(
-      "🔒 MULTI-TENANT CROSS OVER EXPOSURE CHECK PASSED: Tenant B UI strictly blocked from inspecting Tenant A files.",
-    );
-
-    // Clean up memory profiles
-    await contextA.close();
-    await contextB.close();
-  });
+test("tenant list and detail reads stay isolated between two verified workspaces", async ({ browser }) => {
+  test.setTimeout(90_000);
+  const database = new pg.Client({ connectionString: process.env.DATABASE_URL });
+  await database.connect();
+  const contexts = [await browser.newContext(), await browser.newContext()];
+  const fixtures = [0, 1].map(() => ({ tenant: randomUUID(), user: randomUUID(), transaction: randomUUID(), email: randomUUID() + "@example.test" }));
+  try {
+    const hash = await bcrypt.hash("IsolationTest123!", 4);
+    await database.query('INSERT INTO roles (name, permissions, "updatedAt") VALUES ($1, $2, NOW()) ON CONFLICT (name) DO NOTHING', ['SuperAdmin', '[]']);
+    for (const fixture of fixtures) {
+      await database.query('INSERT INTO tenants (id, name, "subscriptionStatus", "updatedAt") VALUES ($1, $2, $3, NOW())', [fixture.tenant, 'Isolation test ' + fixture.tenant, 'free']);
+      await database.query('INSERT INTO users (id, email, "passwordHash", "tenantId", "roleId", "emailVerifiedAt", "updatedAt") VALUES ($1, $2, $3, $4, (SELECT id FROM roles WHERE name = $5), NOW(), NOW())', [fixture.user, fixture.email, hash, fixture.tenant, 'SuperAdmin']);
+      await database.query('INSERT INTO transactions (id, description, amount, status, "tenantId", "userId", "updatedAt") VALUES ($1, $2, 7, $3, $4, $5, NOW())', [fixture.transaction, 'Private ' + fixture.tenant, 'pending', fixture.tenant, fixture.user]);
+    }
+    for (const [index, fixture] of fixtures.entries()) {
+      const page = await contexts[index].newPage();
+      const foreign = fixtures[1 - index];
+      await page.goto('/login');
+      await page.locator('input[type="email"]').fill(fixture.email);
+      await page.locator('input[type="password"]').fill('IsolationTest123!');
+      await page.getByRole('button', { name: 'Sign In', exact: true }).click();
+      await expect(page.getByRole('heading', { name: 'Dashboard Overview' })).toBeVisible({ timeout: 20_000 });
+      await page.goto('/transactions');
+      await expect(page.getByRole('link', { name: 'Private ' + fixture.tenant, exact: true })).toBeVisible();
+      await expect(page.getByText('Private ' + foreign.tenant, { exact: true })).toHaveCount(0);
+      await page.goto('/transactions/' + foreign.transaction);
+      await expect(page.getByRole('heading', { name: 'Transaction not found' })).toBeVisible();
+      await expect(page.getByText('Private ' + foreign.tenant, { exact: true })).toHaveCount(0);
+      await page.goto('/transactions/' + fixture.transaction);
+      await expect(page.getByRole('heading', { name: 'Transaction details' })).toBeVisible();
+      await expect(page.getByText('Private ' + fixture.tenant, { exact: true })).toBeVisible();
+    }
+  } finally {
+    for (const context of contexts) await context.close();
+    for (const fixture of fixtures) {
+      await database.query('DELETE FROM transactions WHERE "tenantId" = $1', [fixture.tenant]);
+      await database.query('DELETE FROM tenants WHERE id = $1 AND name = $2', [fixture.tenant, 'Isolation test ' + fixture.tenant]);
+    }
+    await database.end();
+  }
 });

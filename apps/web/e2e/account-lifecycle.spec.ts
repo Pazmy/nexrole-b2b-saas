@@ -57,6 +57,20 @@ test("local previews complete onboarding, recovery, password change, and invitat
     await login(page, email.toUpperCase(), "initial-password-123");
     await login(otherPage, email, "initial-password-123");
 
+    // Step 8.3 acceptance starts from an actual newly registered workspace.
+    await page.goto("/transactions");
+    await expect(page.getByText("No transactions yet. New transactions will appear here.")).toBeVisible();
+    await page.getByRole("button", { name: "New transaction", exact: true }).click();
+    await page.getByLabel("Description", { exact: true }).fill("First workspace transaction");
+    await page.getByLabel("Amount (USD)").fill("19.95");
+    await page.getByRole("button", { name: "Create transaction", exact: true }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Transaction created." })).toBeVisible();
+    await page.getByRole("link", { name: "First workspace transaction", exact: true }).click();
+    await page.getByRole("button", { name: "Save status", exact: true }).click();
+    await expect(page.getByRole("status")).toContainText("Transaction marked completed.");
+    await page.getByRole("link", { name: "Overview", exact: true }).click();
+    await expect(page.getByText("$19.95", { exact: true })).toBeVisible();
+
     await page.goto("/forgot-password");
     await page.getByLabel("Email", { exact: true }).fill(email);
     await page.getByRole("button", { name: "Send reset email" }).click();
@@ -113,6 +127,7 @@ test("local previews complete onboarding, recovery, password change, and invitat
     try {
       const owners = await database.query('SELECT t.id FROM users u JOIN tenants t ON t.id = u."tenantId" WHERE u.email = $1 AND t.name = $2', [email, company]);
       if (owners.rows[0]) {
+        await database.query('DELETE FROM transactions WHERE "tenantId" = $1', [owners.rows[0].id]);
         await database.query('DELETE FROM invitations WHERE "tenantId" = $1', [owners.rows[0].id]);
         await database.query('DELETE FROM tenants WHERE id = $1 AND name = $2', [owners.rows[0].id, company]);
       }

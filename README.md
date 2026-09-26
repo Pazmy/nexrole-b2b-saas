@@ -74,6 +74,7 @@ Web operations use `requirePermission` in `apps/web/src/lib/authorization.ts`. E
 | Operation | SuperAdmin | Member | Developer |
 | --- | --- | --- | --- |
 | Read workspace, member directory, and transactions | Yes | Yes | Yes |
+| Create transactions or change their status | Yes | No | No |
 | Update organization or invite members | Yes | No | No |
 | View API-key metadata, create/revoke keys | Yes | No | No |
 | Open Stripe checkout or billing portal | Yes | No | No |
@@ -83,6 +84,70 @@ Web operations use `requirePermission` in `apps/web/src/lib/authorization.ts`. E
 API keys are separate workspace credentials with read-only transaction export access. They are not tied to an individual user's session or activity status; revoke the key to remove integration access. Key hashes remain server-side, and only administrators receive key metadata in the settings UI.
 
 Run `npm run test:access` from the repository root for the access-control regressions. They execute the real guards, Auth.js callbacks, server actions, and Express HTTP routes with mocked database/session/Stripe boundaries; no database credentials are required. Browser and live-database acceptance remains part of the MVP release checks.
+
+### Transaction rules (Step 8.3.1)
+
+The shared contract lives in `apps/web/src/lib/transaction-rules.ts` and `transaction-entitlements.ts`. Step 8.3.1 defines the rules; creation is implemented in 8.3.2/8.3.3, details/status updates in 8.3.4, and list/dashboard integration in 8.3.5 below. Step 8.3 acceptance passed on 2026-09-26; see 8.3.6 below.
+
+- Amounts use USD, from `0.01` to `99999999.99`, supplied as decimal text with at most two fractional digits. Accepted values normalize to two decimal places without floating-point rounding. Currency symbols, grouping separators, exponent notation, zero, negative values, and excess precision are rejected.
+- Descriptions are trimmed and must contain 1–500 characters. Creation accepts only description and amount; tenant, actor, currency, and initial status cannot be supplied by the client. New records will start `pending`.
+- The only status transitions are `pending → completed` and `pending → failed`. Terminal states cannot reopen or change to another terminal state; repeated transitions are rejected.
+- Only SuperAdmin has `transactions:create` and `transactions:update-status`. All three known roles retain tenant-scoped read access.
+- `free` and `canceled` allow up to 10 stored transactions. The limit blocks creation only; an administrator can still update an existing transaction's status at or above the limit. `active` and `trialing` explicitly qualify for Pro without a transaction-count limit. `past_due`, `unpaid`, `incomplete`, `incomplete_expired`, `paused`, missing and unknown statuses deny transaction writes.
+
+Run `npm run test:transactions:rules` for the contract and query tests. These are pure rules, not authorization or concurrency enforcement by themselves: The creation/status services read current state inside the atomic write boundary. The dashboard billing summary uses the same entitlement policy as of Step 8.3.5. Stripe lifecycle/webhook changes remain in Step 8.5.
+
+### Transaction creation backend (Step 8.3.2)
+
+The server action is `apps/web/src/app/(dashboard)/transactions/create-action.ts`. It accepts FormData with `description` and `amount`, and returns a typed success result containing `transactionId` or a safe error code/message. React's internal action metadata is ignored; duplicate fields and extra application fields are rejected. The form added in 8.3.3 calls this action.
+
+The server-only service `apps/web/src/lib/create-transaction.ts` authenticates the caller itself. It takes a PostgreSQL tenant-row lock, rechecks current membership/session/role under shared locks, then checks billing and counts all stored transaction statuses before insertion. This serializes concurrent creators per workspace. The Free limit blocks the eleventh stored record even when different administrators submit simultaneously; eligible Pro workspaces are not count-limited. Direct SQL/seed scripts are outside this application guard; all application creation paths must call this service.
+
+Run `npm run test:transactions:db` with PostgreSQL available. Like the account database suite, it uses `TEST_DATABASE_URL` or `packages/database/.env`, creates and migrates a random `transaction_test_*` schema, tests real concurrent writes, and removes only that schema afterward. Its user session transport is mocked; database permissions, locks and transactions are real. No changes to the application schema or existing records are required for this checkpoint.
+
+### Transaction creation UI (Step 8.3.3)
+
+1. Start the application and sign in as a verified SuperAdmin. Local email previews from Step 8.2 are sufficient; a Resend domain is not required.
+2. Open `/transactions`, choose **New transaction**, enter a description and an amount such as `12.50`, then choose **Create transaction**. Controls disable while saving; success refreshes the list and usage count. The new row starts as **pending**.
+3. With search/status filters or pagination active, the new row may be hidden. Choose **View latest transactions** to open the unfiltered first page. Choose **Create another transaction** for a blank form.
+4. Try `0` or `12.345`: an error appears and the description stays entered. Cancel closes the form without a write.
+5. On Free, creation disables at 10 stored transactions across all statuses. If another administrator fills the quota while a form is open, submission returns a server error and refreshes the usage hint. Eligible Pro permits more than 10; restricted subscriptions show a billing link and disable creation.
+6. Sign in as Member or Developer: the existing ledger remains readable and the creation form is absent. Detail/status behavior is documented in 8.3.4 below.
+
+Automated browser coverage: with the local web server running and `DATABASE_URL` in `apps/web/.env`, run `npx playwright test e2e/transaction-creation.spec.ts` from `apps/web`. Set `PLAYWRIGHT_BASE_URL` if the server uses another port and `PLAYWRIGHT_CHANNEL=msedge` to use installed Edge. This test uses the application's local database, creates a unique test workspace and verified users, and deletes its fixture workspace/transactions afterward. It also checks stale quota, pending controls under a real database lock, billing restrictions, Pro creation, and Member visibility. Use a local test database.
+
+
+---
+
+### Transaction details and status (Step 8.3.4)
+
+1. Sign in as SuperAdmin, open `/transactions`, and click a transaction description. Details show the exact USD amount, status, timestamps, and transaction ID.
+2. For a Pending transaction, choose **Completed** or **Failed**, then **Save status**. Controls disable during saving. After success, the final status is displayed and further edits are unavailable. Return to the list to see the updated status.
+3. Open the same Pending transaction in two tabs. Save Completed in the first, then submit Failed from the second. The second receives a conflict and refreshes to the committed status; it cannot overwrite the first update.
+4. At or above the Free limit of 10 stored transactions, existing Pending transactions can still change status. Restricted billing blocks status changes but leaves details readable.
+5. As Member/Developer, open a transaction: details remain readable, with no status form. An invalid, missing, or other workspace's ID shows the same not-found view.
+
+The server rechecks verified membership, role and billing inside the write transaction and uses a conditional Pending-only update. Terminal statuses cannot reopen or switch. Run `npm run test:transactions:db` for creation/detail/status isolation and concurrency coverage. The browser command in 8.3.3 also covers this detail/status journey, including stale tabs and pending controls. No migration or Resend setup is needed for the local preview journey. Final build/regression evidence is recorded in 8.3.6.
+
+### List and dashboard integration (Step 8.3.5)
+
+1. Search by description and select a status, then Apply. Pagination preserves both filters. Clear resets the list; browser Back restores the earlier filter values.
+2. Try `?page=-1&status=unknown`: invalid page/status values fall back to page 1/all statuses. Repeated parameters fall back to defaults, and searches are trimmed to 500 characters. A page beyond the result count displays the last available page. Pagination links use the effective page; the original manually entered URL is not rewritten.
+3. Search for a description with no matches to see filtered-empty guidance. An empty workspace shows a separate first-transaction message. Route loading and filter submission provide progress feedback; unexpected page errors retain the existing retry/home card.
+4. Create a Pending transaction, then visit Overview: total and Pending counts increase. Mark it Completed and return: Pending decreases, Completed and Total Revenue increase. Marking Failed reduces Pending without adding revenue. Revenue is the sum of completed transactions; the old fixed growth percentage is removed because monthly analytics are deferred.
+5. At the Free quota, the banner explains that only creation is blocked. Restricted subscription states show a write-restriction banner while reads remain available. Review Billing Settings opens settings; Member/Developer see guidance to contact an administrator.
+
+The existing browser test covers list/filter/dashboard integration as well as the earlier transaction journey. The original card/table/filter design is retained. The timestamp heading now correctly describes creation time. Error text uses a reference instead of showing raw exception details.
+
+### Final transaction acceptance (Step 8.3.6)
+
+Step 8.3 passed on 2026-09-26: 64 reported regression tests, all three development browser scenarios, production transaction checks repeated twice, production tenant isolation, lint, TypeScript and database/web/API builds. Detailed evidence and scope limits are in `BUILD_PLAN.md`.
+
+Transaction submissions now reload the page after a successful write or a quota/billing/status conflict. This avoids an observed production-only React/Next transition hang after complete action responses (similar symptoms are reported in [Next issue #97990](https://github.com/vercel/next.js/issues/97990)). The existing feedback card and rejected input are retained in tab-local session storage for up to five minutes, scoped by workspace/transaction; Close or Create another clears creation feedback. Validation errors retain the current form without a reload. If session storage is disabled, the data still reloads but feedback cannot survive the reload. No writes are automatically retried.
+
+To repeat acceptance from the repository root, run `npm run test:access`, `npm run test:accounts`, `npm run test:transactions:rules`, `npm run test:accounts:db`, `npm run test:transactions:db`, `npm run lint`, `npm run build`, and **`npm run build -w apps/api`** (the root build omits API). With the development web server running in email preview mode, run `npm run test:e2e`; `PLAYWRIGHT_BASE_URL` and `PLAYWRIGHT_CHANNEL=msedge` select the local server and installed Edge. Browser tests use disposable local workspaces, not the seeded demo accounts.
+
+For production, supply the real HTTPS `NEXT_PUBLIC_APP_URL` **before building** as well as at startup. Configure Auth.js to trust the known deployment host/proxy (`AUTH_TRUST_HOST=true` was used only for the local smoke server). Email preview mode is rejected in production; configure real Resend credentials and sender before deployment. The production smoke used dummy process-only email configuration with already-verified fixture accounts and sent no emails. Real Resend delivery remains unverified; follow the [live email checklist](docs/ACCOUNT_SETUP.md#final-action-after-resend-is-ready-configure-and-verify-live-delivery) once the domain is ready. Step 8.4 and later MVP work remain separate.
 
 ---
 

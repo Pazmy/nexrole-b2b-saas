@@ -8,9 +8,11 @@ import Link from "next/link";
 export default function DashboardErrorBoundary({
   error,
   reset,
+  unstable_retry,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
+  unstable_retry?: () => void;
 }) {
   useEffect(() => {
     // Log the error client-side for analytics/exception reporting
@@ -32,9 +34,9 @@ export default function DashboardErrorBoundary({
           </h2>
           <p className="text-sm text-zinc-400 leading-relaxed">
             An unexpected error occurred while loading this dashboard view.
-            {error.message && (
+            {error.digest && (
               <span className="block font-mono text-xs text-red-400 mt-2 bg-zinc-950 p-2 rounded border border-zinc-800 text-left overflow-x-auto max-h-24">
-                {error.message}
+                Reference: {error.digest}
               </span>
             )}
           </p>
@@ -43,7 +45,7 @@ export default function DashboardErrorBoundary({
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Button
-            onClick={() => reset()}
+            onClick={() => unstable_retry ? unstable_retry() : reset()}
             className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium gap-2 transition-all"
           >
             <RotateCw className="h-4 w-4" />

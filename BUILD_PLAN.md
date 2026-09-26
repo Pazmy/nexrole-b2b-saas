@@ -4,7 +4,7 @@ This serves as a detailed engineering manual, blueprint, and interactive checkpo
 
 ## Current document version: `V.1.3.0`
 
-## Last updated: `2026-09-21`
+## Last updated: `2026-09-25`
 
 ## MVP target and tracking rules
 
@@ -190,11 +190,73 @@ Keep scope, dependencies, and acceptance criteria here. Use issues or PRs for in
 
 #### Step 8.3: Deliver the first useful transaction workflow
 
-- [ ] Add transaction creation, a detail view, and permitted status updates. Define amount validation and allowed status transitions; derive tenant and actor from verified server context.
-- [ ] Enforce permissions and billing entitlements on every transaction write. Make Free quota enforcement safe under concurrent creates.
-- [ ] MVP quota decision: Free allows at most 10 stored transactions per workspace; eligible Pro subscriptions have no transaction-count limit. Monthly reset semantics and transaction deletion are deferred.
-- [ ] Preserve search/filter/pagination; validate query parameters and provide useful empty, loading, success, and error states.
-- [ ] Remove the hardcoded dashboard growth percentage or replace it with a real period comparison.
+**Sequential execution plan (2026-09-25):** Execute one checkpoint per user continuation. After each checkpoint, record changed files, checks and results, remaining issues, and the next checkpoint here. Do not mark an item complete until its implementation and relevant checks pass. Preserve existing page layouts, cards, tables, filters, icons, and styling; explain any UI element that must be replaced for functional reasons. This plan is recorded before implementation begins.
+
+**Prerequisite evidence:** On 2026-09-25, the user reported that manual testing of Step 8.2 was overall successful. Real Resend delivery remains pending and does not block local-preview development of Step 8.3.
+
+- [x] **8.3.1 — Transaction rules and permissions.** Define shared amount/description validation, initial status, allowed status transitions, write permissions, and explicit billing eligibility. Implemented MVP rules: USD with positive amounts and at most two decimal places within the existing Decimal(10,2) range; new transactions start pending; pending can become completed or failed; terminal states cannot be reopened. SuperAdmin writes, Member/Developer retain read access. Specify which subscription states permit writes; unknown states must not gain Pro access. Distinguish the creation quota from permission to update existing transactions. Check these rules with focused tests before exposing mutations.
+- [x] **8.3.2 — Safe transaction creation on the server.** Implement creation using verified tenant/actor context, role and billing checks, and atomic per-workspace quota enforcement. Free allows 10 stored transactions; eligible Pro is unlimited. Test invalid input, unauthorized/cross-tenant requests, and concurrent attempts to create the tenth/eleventh transaction. No creation UI until this boundary passes.
+- [x] **8.3.3 — Transaction creation UI.** Add the creation entry point and form using the existing visual style. Connect the checked server action, validation, pending/success/error states, quota feedback, and list refresh. Verify the normal creation journey and rejected submissions.
+- [x] **8.3.4 — Transaction details and status updates.** Add tenant-scoped detail reads and a matching detail page. Implement authorized status changes with billing checks, permitted transitions, and protection against conflicting concurrent updates. Link to details from the existing list. Verify foreign IDs, invalid transitions, insufficient roles, and updates at the Free creation limit.
+- [x] **8.3.5 — List and dashboard integration.** Preserve search/filter/pagination while validating query parameters and handling empty/loading/error states. Refresh list/detail/dashboard data after mutations. Replace the hardcoded growth percentage with truthful supporting text while preserving the card design; new period analytics are deferred.
+- [x] **8.3.6 — Final acceptance and handoff.** Run applicable regression tests, PostgreSQL concurrency tests, the complete browser transaction journey, lint, type checks, and web/API builds. Document manual test steps, evidence, and any remaining external limitations. Only then mark the original Step 8.3 acceptance checklist complete.
+
+**Current checkpoint:** 8.3.6 and Step 8.3 complete (2026-09-26). Stop here; Step 8.4 requires its own sequential plan. Deletion, monthly quota resets, membership administration, and Stripe webhook/billing lifecycle redesign are outside this step; only billing checks required by transaction writes are included.
+
+**8.3.1 evidence (2026-09-25):**
+
+- Added `transaction-rules.ts`: exact decimal-text USD validation (0.01?99999999.99), trimmed 1?500-character descriptions, strict input schemas, pending initial state, and pending-to-completed/failed transitions only. Client-supplied tenant/actor/status/currency fields are rejected by the creation schema.
+- Added `transaction-entitlements.ts`: free/canceled use the 10-stored-record creation limit; active/trialing explicitly qualify for unlimited Pro counts; all other/missing statuses deny writes. Status updates are independent of the creation quota. Invalid counts and unsupported operations fail closed.
+- Updated `permissions.ts` with SuperAdmin-only transaction creation/status permissions; Member/Developer retain read-only access. Updated the README contract and added `npm run test:transactions:rules`.
+- Validation: **11 transaction-rule tests passed**, **16 existing access-control tests passed**, web TypeScript checking and targeted ESLint passed. No schema migration, database mutation, new action, or UI change in this checkpoint.
+- Remaining boundary: the new entitlement helper is a pure policy. It does not yet enforce concurrent writes; implement that in 8.3.2. The legacy dashboard billing summary still uses its existing guard until UI integration in 8.3.5. Do not use that legacy summary to authorize new writes.
+
+**8.3.2 evidence (2026-09-25):**
+
+- Added server-only `create-transaction.ts` and `transactions/create-action.ts`. Both the tenant and actor derive from verified session/membership; extra ownership/status/currency fields and repeated form fields are rejected. The action returns only a success message and transaction ID, or a safe validation/access/billing/quota/error result.
+- Creation locks the tenant row before reading billing and counting stored transactions, using a READ COMMITTED database transaction. Membership, verification, session version and role are rechecked after obtaining that lock; shared membership/role locks protect the decision until commit. Every future creation path must use this boundary rather than counting separately.
+- Added `npm run test:transactions:db`: **11 passing** (10 PostgreSQL subtests plus the parent suite), run against a disposable schema with real migrations, locks and writes. A race of 12 requests from two administrators for one remaining Free slot produced exactly one success and 11 quota denials. Covers tenth/eleventh creation, cross-tenant forgery, inactive/unverified/stale/demoted sessions, restricted billing, eligible Pro, changes while waiting on locks, and database rollback/error sanitization.
+- Regression evidence: **11 rule tests** and **16 access-control tests** passed; web TypeScript and targeted ESLint passed. The test schema was removed afterward. No application database migration or UI change was needed.
+- Remaining work: creation UI and cache refresh in 8.3.3; detail/status mutation in 8.3.4; legacy billing-summary UI integration in 8.3.5; final browser/build acceptance in 8.3.6. Audit-policy integration remains in 8.5. This checkpoint has no browser creation workflow yet.
+
+**8.3.3 evidence (2026-09-25):**
+
+- Added `create-transaction-form.tsx` and connected it to the existing ledger page for SuperAdmin. Preserved the existing sidebar, header, cards, filters, table, pagination, and visual style; no old UI element was removed.
+- Added exact USD validation, retained inputs after errors, disabled controls/spinner while saving, success feedback, a fresh-form action, and a link to the unfiltered first page. Usage counts include all workspace transactions even when the list is filtered. Free quota and restricted billing disable creation; the server remains authoritative when usage or permissions change after rendering.
+- The creation action invalidates list/dashboard paths after commit; the client refreshes success and changed-access/billing/quota responses. Cache refresh failure does not misreport a committed transaction as a failed creation.
+- Validation: **1 Playwright browser scenario passed** against local Edge and PostgreSQL, covering cancel/reopen, invalid amounts, retained inputs, pending controls under a real database lock, filtered-list success, fresh-form reset, stale quota rejection, restricted billing, Pro creation beyond 10, and Member read-only UI. Test fixtures were cleaned up afterward. **11 PostgreSQL creation tests passed**; web TypeScript and targeted ESLint passed. The form screenshot was visually reviewed.
+- Remaining work: detail/status updates in 8.3.4; complete query/dashboard integration in 8.3.5; full regression/build acceptance in 8.3.6. No migration or Resend/domain setup is required for this checkpoint.
+
+**8.3.4 evidence (2026-09-25):**
+
+- Added tenant-scoped `transaction-detail.ts`, `/transactions/[id]` detail/not-found pages, and `transaction-status-form.tsx`. Existing ledger descriptions now link to details; no original layout, table column, card, filter, or icon was removed. Member/Developer can read details without mutation controls. Malformed, missing, and foreign IDs disclose no transaction data.
+- Added `update-transaction-status.ts` and `transactions/status-action.ts`. The service derives the actor from the verified session, locks in the same tenant/member order as creation, rechecks current permission and billing after waiting, and atomically updates only a tenant-owned pending row. Only completed/failed are accepted. Terminal/repeated/concurrent losing updates return a conflict. Free quota does not block updates. Detail/list/dashboard caches are invalidated after commit.
+- Validation: **16 PostgreSQL tests passed** (15 subtests plus parent), retaining all creation regressions and adding detail isolation, quota-boundary status changes, two competing terminal updates, forged inputs, stale/inactive/unverified/insufficient-role sessions, restricted billing, and membership/billing changes during lock waits.
+- **1 expanded Playwright journey passed** in Edge with local PostgreSQL: creation regressions, list-to-detail navigation, Member read-only detail, updates above the Free count limit, pending controls under a real lock, stale-tab conflict, final-state UI, completed/failed list refresh, restricted billing, and invalid/missing routes. Detail screenshot visually reviewed. TypeScript and targeted ESLint passed. Fixture data was cleaned up. No schema migration needed.
+- Remaining: query/list/dashboard integration in 8.3.5 and full regression/build acceptance in 8.3.6. Audit integration remains in 8.5; this checkpoint stops before those changes.
+
+**8.3.5 evidence (2026-09-25):**
+
+- Added shared `transaction-query.ts`: positive safe-integer pages, allowlisted statuses, bounded trimmed searches, and deterministic fallback for repeated parameters. The list counts before clamping to the last available page and orders by creation time plus ID. Pagination keeps valid search/status values and boundary links are not keyboard-focusable. Filters remount from normalized URL state, including browser Back and the post-creation latest-list link; Apply/Clear show pending state.
+- Preserved all original cards, table columns, filters, icons, and sidebar. Replaced the fictitious +12.2% growth with completed-value context and corrected the stored-count copy. Renamed Settled Timestamp to Created Timestamp because the field is createdAt. Empty results now distinguish no records from no filter matches. Added workspace/transaction loading views. Existing error-card design remains; retry uses the installed Next retry API and displays a diagnostic reference instead of raw exception text.
+- Billing summary now reuses the transaction entitlement policy: only active/trialing are Pro, free/canceled use the creation quota, and other/missing states are restricted. The existing banner explains creation-only quota versus write restrictions without claiming the whole account is locked. Its styled billing control now links to settings, where Free workspaces can upgrade without requiring an existing Stripe customer portal.
+- Validation: **12 rules/query tests**, **17 PostgreSQL tests** (16 subtests plus parent), web TypeScript and targeted ESLint passed. **1 expanded Playwright journey passed**: prior create/detail/status flow, refreshed completed revenue/counts, truthful dashboard copy, billing banners, oversized/malformed/repeated query parameters, preserved filters during pagination, Clear/Back synchronization, and filtered-empty feedback. Dashboard screenshot visually reviewed; browser fixture data cleaned up.
+- No schema migration or old design removal. Full regression/build checks and final acceptance remain in 8.3.6; explicit loading/error recovery fault injection is not covered by the browser scenario above. Stripe lifecycle and audit integration remain in 8.5.
+
+**8.3.6 acceptance evidence (2026-09-26):**
+
+- Regression checks passed: **16 access-control**, **6 account**, **12 transaction rules/query**, **13 account PostgreSQL**, and **17 transaction PostgreSQL** tests (64 reported tests including parent suites). Full workspace lint, web TypeScript, database/web production builds, and the separate API build passed. The root build still does not include the API, which was checked explicitly.
+- All **3 browser scenarios passed** in development: accounts, tenant isolation, and transactions. Account coverage now includes actual workspace registration/verification followed by first-transaction creation, completion and dashboard revenue. Tenant isolation uses two disposable verified workspaces, checks lists and foreign detail IDs in both directions, and no longer depends on old seeded credentials/data. Existing seed accounts were not modified.
+- Production smoke testing exposed an intermittent client transition failure: writes and HTTP responses completed while transaction forms or refreshed data remained stale. Direct action binding alone did not resolve it. The final `use-transaction-submit.ts` keeps submit state outside React transitions, prevents duplicate submissions, and reloads the document after success or changed-policy/conflict responses. Short-lived tab-local feedback preserves the existing success/error card and rejected input, scoped by workspace/transaction. Server authorization, exact validation, locks, and cache invalidation remain authoritative. No design element was removed.
+- The final production transaction journey passed **twice consecutively**, including stale quota, concurrent status conflict, retained inputs, list/filter navigation and dashboard counts. Production tenant isolation had already passed; it was not rerun after changes confined to transaction forms. The affected registration-to-first-transaction/account journey was rerun after the final fix and passed. Final changed-file lint and the rebuilt web TypeScript check passed. Test-owned rows/previews were cleaned up, including exact fixtures from interrupted diagnostic attempts.
+- Runtime configuration evidence: production startup requires trusted deployment host configuration and an HTTPS application origin supplied at build time. The local production smoke used process-only host trust and dummy Resend configuration, with verified fixture users and no email requests. This is **not** real email delivery or deployment acceptance. Real Resend/domain verification remains the Step 8.2 external checklist. No dependency upgrade or database migration was required.
+- Scope limits: explicit route-loading/error-boundary fault injection was not performed; mutation error/conflict paths were exercised. Broader membership, Stripe lifecycle, audit and release acceptance remain in Steps 8.4–8.6. Step 8.3 completion does not mark the whole MVP production-ready.
+
+- [x] Add transaction creation, a detail view, and permitted status updates. Define amount validation and allowed status transitions; derive tenant and actor from verified server context.
+- [x] Enforce permissions and billing entitlements on every transaction write. Make Free quota enforcement safe under concurrent creates.
+- [x] MVP quota decision: Free allows at most 10 stored transactions per workspace; eligible Pro subscriptions have no transaction-count limit. Monthly reset semantics and transaction deletion are deferred.
+- [x] Preserve search/filter/pagination; validate query parameters and provide useful empty, loading, success, and error states.
+- [x] Remove the hardcoded dashboard growth percentage or replace it with a real period comparison.
 
 **Acceptance:** A new workspace creates and updates its own transactions; dashboard totals reflect changes. Unauthorized writes fail. The tenth Free transaction succeeds and the eleventh is rejected, including concurrent submissions.
 

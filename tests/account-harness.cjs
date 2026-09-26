@@ -17,6 +17,7 @@ module.exports = function harness(database, mail) {
     if (request === 'server-only') return {};
     if (request === '@nexrole/database') return { prisma: database };
     if (request === 'next/headers') return { headers: async () => new Headers() };
+    if (request === 'next/cache') return { revalidatePath() {} };
     if (request === 'next-auth') return (options) => { authConfig = options; return { auth: async () => session }; };
     if (request === 'next-auth/providers/credentials') return (options) => options;
     if (request === '@/lib/audit') return { writeAuditLog: async () => {} };

@@ -3,24 +3,27 @@ import { prisma } from "@nexrole/database";
 import TransactionFilters from "@/components/transaction-filters";
 import { ArrowLeft, ArrowRight, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { hasPermission } from "@/lib/permissions";
+import CreateTransactionForm from "@/components/create-transaction-form";
+import { parseTransactionQuery, TRANSACTION_PAGE_SIZE, type TransactionSearchParams } from "@/lib/transaction-query";
 
 interface PageProps {
-  searchParams: Promise<{ page?: string; status?: string; search?: string }>;
+  searchParams: Promise<TransactionSearchParams>;
 }
 
 export default async function TransactionsPage({ searchParams }: PageProps) {
-  const { tenantId } = await requirePermission("transactions:read");
+  const { tenantId, role } = await requirePermission("transactions:read");
+  const canCreate = hasPermission(role, "transactions:create");
 
-  const resolvedParams = await searchParams;
-  const currentPage = Number(resolvedParams.page) || 1;
-  const currentStatus = resolvedParams.status || "all";
-  const currentSearch = resolvedParams.search || "";
+  const query = parseTransactionQuery(await searchParams);
+  const currentStatus = query.status;
+  const currentSearch = query.search;
 
-  const pageSize = 5;
+  const pageSize = TRANSACTION_PAGE_SIZE;
 
   // Assemble dynamic multi-tenant queries
   const whereClause: {
-    tenantId?: string;
+    tenantId: string;
     status?: string;
     description?: {
       contains: string;
@@ -41,19 +44,22 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
     };
   }
 
-  const [transactions, totalRecords] = await Promise.all([
-    prisma.transaction.findMany({
-      where: whereClause,
-      skip: (currentPage - 1) * pageSize,
-      take: pageSize,
-      orderBy: { createdAt: "desc" },
-    }),
+  const [totalRecords, creationInfo, storedCount] = await Promise.all([
     prisma.transaction.count({
       where: whereClause,
     }),
+    canCreate ? prisma.tenant.findUnique({ where: { id: tenantId }, select: { subscriptionStatus: true } }) : null,
+    canCreate ? prisma.transaction.count({ where: { tenantId } }) : 0,
   ]);
 
   const totalPages = Math.ceil(totalRecords / pageSize) || 1;
+  const currentPage = Math.min(query.page, totalPages);
+  const transactions = await prisma.transaction.findMany({
+    where: whereClause,
+    skip: (currentPage - 1) * pageSize,
+    take: pageSize,
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+  });
 
   // Helper template string function to pass pagination variables forward
   const getPaginationUrl = (pageNumber: number) => {
@@ -74,7 +80,9 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
         </p>
       </div>
 
-      <TransactionFilters />
+      <TransactionFilters key={`${currentSearch}:${currentStatus}:${currentPage}`} initialSearch={currentSearch} initialStatus={currentStatus} />
+
+      {canCreate && creationInfo && <CreateTransactionForm tenantId={tenantId} storedCount={storedCount} subscriptionStatus={creationInfo.subscriptionStatus} />}
 
       {/* DATA VIEW COMPONENT AREA */}
       <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
@@ -82,7 +90,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           <div className="flex flex-col items-center justify-center p-12 text-zinc-500 gap-3">
             <AlertCircle className="h-8 w-8 text-zinc-600" />
             <p className="text-sm font-medium">
-              No matching ledger activities recorded.
+              {currentSearch || currentStatus !== "all" ? "No matching ledger activities recorded. Clear filters to see all transactions." : "No transactions yet. New transactions will appear here."}
             </p>
           </div>
         ) : (
@@ -93,7 +101,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                   <th className="p-4">Description</th>
                   <th className="p-4">Status</th>
                   <th className="p-4 text-right">Amount</th>
-                  <th className="p-4 text-right">Settled Timestamp</th>
+                  <th className="p-4 text-right">Created Timestamp</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60 text-sm">
@@ -103,7 +111,7 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
                     className="hover:bg-zinc-850/30 transition-colors group"
                   >
                     <td className="p-4 text-zinc-200 font-medium max-w-xs md:max-w-md truncate">
-                      {tx.description}
+                      <Link href={`/transactions/${tx.id}`} className="hover:text-white hover:underline focus-visible:underline">{tx.description}</Link>
                     </td>
                     <td className="p-4">
                       <span
@@ -149,7 +157,9 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
           </p>
           <div className="flex items-center gap-2">
             <Link
-              href={getPaginationUrl(currentPage - 1)}
+              href={getPaginationUrl(Math.max(1, currentPage - 1))}
+              aria-disabled={currentPage <= 1}
+              tabIndex={currentPage <= 1 ? -1 : undefined}
               className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium border border-zinc-800 bg-zinc-900 transition-colors ${
                 currentPage <= 1
                   ? "pointer-events-none opacity-40"
@@ -160,7 +170,9 @@ export default async function TransactionsPage({ searchParams }: PageProps) {
               Previous
             </Link>
             <Link
-              href={getPaginationUrl(currentPage + 1)}
+              href={getPaginationUrl(Math.min(totalPages, currentPage + 1))}
+              aria-disabled={currentPage >= totalPages}
+              tabIndex={currentPage >= totalPages ? -1 : undefined}
               className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium border border-zinc-800 bg-zinc-900 transition-colors ${
                 currentPage >= totalPages
                   ? "pointer-events-none opacity-40"

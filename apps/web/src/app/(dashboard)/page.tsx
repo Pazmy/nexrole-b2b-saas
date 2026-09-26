@@ -50,7 +50,7 @@ export default async function DashboardPage() {
             <div className="text-2xl font-bold text-zinc-100">
               {formattedVolume}
             </div>
-            <p className="text-xs text-zinc-500">+12.2% from last month</p>
+            <p className="text-xs text-zinc-500">Total value of completed transactions</p>
           </CardContent>
         </Card>
 
@@ -63,9 +63,9 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-zinc-100">
-              +{totalTransactions}
+              {totalTransactions}
             </div>
-            <p className="text-xs text-zinc-500">Lifetime system requests</p>
+            <p className="text-xs text-zinc-500">All stored workspace transactions</p>
           </CardContent>
         </Card>
 
