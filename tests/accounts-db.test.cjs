@@ -44,12 +44,19 @@ test('account lifecycle against PostgreSQL in an isolated disposable schema', { 
       await admin.query('DELETE FROM invitations; DELETE FROM users; DELETE FROM tenants; DELETE FROM roles;');
     });
 
+    await admin.query(fs.readFileSync('packages/database/prisma/migrations/20260927000000_unique_invitations/migration.sql', 'utf8'));
     process.env.NODE_ENV = 'test'; process.env.EMAIL_MODE = 'preview'; process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
     harness = require('./account-harness.cjs')(prisma, async (email, purpose, token) => {
       if (failDelivery) throw new Error('simulated delivery failure');
       emails.push({ email, purpose, token });
     });
     const accounts = require('../apps/web/src/lib/accounts.ts');
+    const { createInvitation } = require('../apps/web/src/lib/manage-invitation.ts');
+    async function invite(email) {
+      const current = await prisma.user.findUnique({ where: { id: user.id } });
+      harness.setSession({ user: { id: current.id, tenantId: current.tenantId, sessionVersion: current.sessionVersion } });
+      return createInvitation({ email, role: 'Member' });
+    }
     const actions = require('../apps/web/src/app/account-actions.ts');
     const { takeLimit } = require('../apps/web/src/lib/account-rate-limit.ts');
     const { requirePermission } = require('../apps/web/src/lib/authorization.ts');
@@ -136,7 +143,7 @@ test('account lifecycle against PostgreSQL in an isolated disposable schema', { 
       await accounts.verifyAccount(emails.at(-1).token);
     });
     await t.test('invitations preserve tenant and role and cannot be consumed twice', async () => {
-      await accounts.inviteAccount('teammate@example.test', 'Member', user.tenantId);
+      await invite('teammate@example.test');
       const token = emails.at(-1).token;
       const invitation = await prisma.invitation.findUnique({ where: { token: accounts.hashToken(token) } });
       assert.ok(invitation);
@@ -144,14 +151,14 @@ test('account lifecycle against PostgreSQL in an isolated disposable schema', { 
       assert.equal(results.filter((r) => r.status === 'fulfilled').length, 1);
       const member = await prisma.user.findUnique({ where: { email: 'teammate@example.test' }, include: { role: true } });
       assert.equal(member.tenantId, user.tenantId); assert.equal(member.role.name, 'Member'); assert.ok(member.emailVerifiedAt);
-      await assert.rejects(() => accounts.inviteAccount(member.email, 'Member', user.tenantId), /already exists/);
+      await assert.rejects(() => invite(member.email), /already exists/);
     });
     await t.test('failed invitation email leaves no usable invitation and can be retried', async () => {
       failDelivery = true;
-      await assert.rejects(() => accounts.inviteAccount('retry-invite@example.test', 'Member', user.tenantId), /could not send/);
+      await assert.rejects(() => invite('retry-invite@example.test'), /could not send/);
       assert.equal(await prisma.invitation.count({ where: { email: 'retry-invite@example.test' } }), 0);
       failDelivery = false;
-      await accounts.inviteAccount('retry-invite@example.test', 'Member', user.tenantId);
+      await invite('retry-invite@example.test');
       assert.equal(emails.at(-1).email, 'retry-invite@example.test');
     });
     await t.test('inactive accounts cannot use previously issued recovery tokens', async () => {

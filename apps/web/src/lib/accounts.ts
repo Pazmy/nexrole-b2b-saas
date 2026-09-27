@@ -96,26 +96,17 @@ export async function changeAccountPassword(id: string, tenantId: string, sessio
   });
 }
 
-export async function inviteAccount(email: string, roleName: string, tenantId: string) {
-  emailConfig();
-  if (!isWorkspaceRole(roleName)) throw new AccountError("Invalid workspace role.");
-  if (await prisma.user.findUnique({ where: { email } })) throw new AccountError("An account with this email already exists. It cannot join another workspace.");
-  const role = await prisma.role.upsert({ where: { name: roleName }, create: { name: roleName, permissions: [] }, update: {} });
-  const token = secret();
-  const tokenHash = hashToken(token);
-  await prisma.invitation.create({ data: { email, token: tokenHash, roleId: role.id, tenantId, expiresAt: new Date(Date.now() + 24 * 60 * 60_000) } });
-  try { await sendAccountEmail(email, "invite", token); }
-  catch {
-    await prisma.invitation.deleteMany({ where: { token: tokenHash } });
-    throw new AccountError("We could not send the invitation. Please try again.");
-  }
-}
-
 export async function acceptInvitation(token: string, password: string) {
   const passwordHash = await bcrypt.hash(password, 12);
   try {
     await prisma.$transaction(async (tx) => {
       const tokenHash = hashToken(token);
+      // Discover ownership, then lock the tenant before re-reading the token.
+      // Resend/revoke use the same lock, so a stale lookup never authorizes acceptance.
+      const owner = await tx.invitation.findUnique({ where: { token: tokenHash }, select: { tenantId: true } });
+      if (!owner) throw new AccountError(INVALID_LINK);
+      const tenants = await tx.$queryRaw`SELECT id FROM tenants WHERE id = ${owner.tenantId}::uuid FOR UPDATE`;
+      if (!Array.isArray(tenants) || !tenants.length) throw new AccountError(INVALID_LINK);
       const invitation = await tx.invitation.findUnique({ where: { token: tokenHash } });
       if (!invitation || invitation.expiresAt <= new Date()) throw new AccountError(INVALID_LINK);
       const role = await tx.role.findUnique({ where: { id: invitation.roleId } });

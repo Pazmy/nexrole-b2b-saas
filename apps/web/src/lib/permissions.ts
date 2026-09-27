@@ -7,12 +7,14 @@ export type Permission =
   | "transactions:update-status"
   | "workspace:update"
   | "members:invite"
+  | "members:manage"
+  | "invitations:manage"
   | "keys:manage"
   | "billing:manage";
 
 const READ_PERMISSIONS: readonly Permission[] = ["workspace:read", "transactions:read"];
 const ROLE_PERMISSIONS: Record<string, readonly Permission[]> = {
-  [ROLE.SUPER_ADMIN]: [...READ_PERMISSIONS, "transactions:create", "transactions:update-status", "workspace:update", "members:invite", "keys:manage", "billing:manage"],
+  [ROLE.SUPER_ADMIN]: [...READ_PERMISSIONS, "transactions:create", "transactions:update-status", "workspace:update", "members:invite", "members:manage", "invitations:manage", "keys:manage", "billing:manage"],
   [ROLE.MEMBER]: READ_PERMISSIONS,
   [ROLE.DEVELOPER]: READ_PERMISSIONS,
 };

@@ -104,6 +104,7 @@ model Invitation {
   createdAt DateTime @default(now())
 
   @@index([token])
+  @@unique([tenantId, email], map: "invitations_tenantId_email_key")
   @@map("invitations")
 }
 

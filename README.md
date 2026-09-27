@@ -151,6 +151,70 @@ For production, supply the real HTTPS `NEXT_PUBLIC_APP_URL` **before building** 
 
 ---
 
+### Membership rules (Step 8.4.1)
+
+Step 8.4 is complete, including final application acceptance. Shared rules/permissions, member management, invitation backend/UI and members/roles routes are ready. Run `npm run test:membership:rules` for the contract tests. Live Resend delivery still requires domain setup and the separate inbox verification checklist.
+
+- SuperAdmin manages members and invitations. Fixed roles remain SuperAdmin, Member and Developer; other roles cannot grant themselves management rights. Member/Developer can read the roster and role matrix, but pending invitations are admin-only.
+- The last active, email-verified administrator cannot be demoted/deactivated. Self-changes require another eligible admin. Services must count other admins and perform the write under the same tenant lock; the pure rule helper is not concurrency enforcement.
+- Role changes and deactivation will invalidate existing sessions. Deactivation preserves the account and transaction history. Reactivation, deletion and workspace transfers are outside this step.
+- Invitation emails normalize to lowercase. Existing accounts cannot be invited into another workspace. Existing outstanding invitations, including expired ones, use Resend rather than duplicate creation. Resend rotates the token and extends expiry to 24 hours; old/revoked/used tokens cannot be accepted. Create/resend share the existing email rate limit.
+- No member schema change is needed. Invitation uniqueness is enforced by migration `20260927000000_unique_invitations`, applied locally in 8.4.4. Real email delivery can remain on local preview during development.
+
+### Member management backend (Step 8.4.2)
+
+`apps/web/src/lib/manage-member.ts` exposes authenticated server-only role-change and deactivation services. `settings/member-actions.ts` accepts FormData: role changes require `id` and `role`; deactivation requires only `id`. Extra ownership/state fields and duplicate fields are rejected. The backend returns a safe error or success with `memberId`, `selfChanged`, and a message. The Team table now exposes these controls to SuperAdmin.
+
+Each mutation locks the tenant before membership rows, rechecks the current actor and counts other active verified administrators. Self-demotion/deactivation requires another eligible administrator. Both changes invalidate the target's old sessions through sessionVersion; deactivation also disables the account without deleting transaction history. Changes take effect at the next protected request, including submissions from already-open tabs. The UI sends a self-changed actor to login. Billing restrictions do not prevent member management.
+
+Run `npm run test:membership:db` with `TEST_DATABASE_URL` or `packages/database/.env`. The suite creates/migrates a random `membership_test_*` schema, exercises real database locks and concurrency with mocked session transport, then removes its schema. No application migration or seed reset is needed.
+
+### Member management UI (Step 8.4.3)
+
+Open **Settings → Team Members** (`/settings?tab=team`) as SuperAdmin. The existing table retains its email, role badge and enrollment date and adds account status and management controls. Choose a role and press **Save role**, or choose **Deactivate** and confirm/cancel. Inactive accounts remain visible. Member/Developer see the roster without management controls.
+
+The last active, verified admin cannot be changed until another member is promoted to SuperAdmin. Self-changes sign you out; deactivation prevents login. Other affected users lose access on their next protected request. Successful changes reload the roster and show temporary per-tab feedback; errors offer a refresh link. The existing invitation form remains intact.
+
+Browser verification: with the local web server and PostgreSQL running, execute `npm run test:e2e -w apps/web -- e2e/member-management.spec.ts` (set `PLAYWRIGHT_BASE_URL` for a non-default port and `PLAYWRIGHT_CHANNEL=msedge` for installed Edge). The test creates and removes dedicated fixture accounts. This journey passed against both development and production; TypeScript, targeted lint and the production build also passed.
+
+### Invitation backend (Step 8.4.4)
+
+`apps/web/src/lib/manage-invitation.ts` provides SuperAdmin-only create/list/resend/revoke services. `settings/invite-action.ts` exposes structured FormData actions (`email` + fixed `role` for create; `id` for resend/revoke). The original invite form now uses the structured create action while retaining its design. Pending-list and resend/revoke UI are connected in 8.4.5.
+
+Only one outstanding invitation may exist per normalized email/workspace, including expired invitations. Use resend to rotate its token and renew its 24-hour lifetime, or revoke and create again to change its assigned role. Existing accounts cannot be reinvited or moved. Create/resend share ten attempts per workspace per 15 minutes; revoke has no email-budget dependency.
+
+New tokens stay expired while email delivery is pending. Successful delivery activates only the still-current token. Failed creates can be retried; failed resends retain an expired row for another resend and never restore the old link. If sending finishes after another resend/revoke, the service reports that the invitation changed. If a process stops before activation, refresh the list and resend the expired invitation. Acceptance and management serialize on the tenant lock, so revoked/replaced/used links cannot create an account.
+
+For another environment, review outstanding invitation duplicates and back up the database before `npx prisma migrate deploy` from `packages/database`. The migration keeps the newest row per workspace/email (createdAt, then id for ties); older links become invalid. Local preflight found no outstanding invitations, so local application deleted none. Regenerate the database package with `npm run build -w packages/database` after schema changes.
+
+Run `npm run test:invitations:db` with `TEST_DATABASE_URL` or `packages/database/.env`. It uses a disposable migrated schema, real PostgreSQL locks, and a controlled mail transport; all **14 tests** passed. Account/membership/access regressions, TypeScript, targeted lint, database package build and production web build also passed. Live Resend delivery still requires the domain setup and email checklist described earlier.
+
+### Invitation UI (Step 8.4.5)
+
+As SuperAdmin, open **Settings → Team Members** and use the existing **Invite Workspace Member** form. Choose Member (default), Developer or SuperAdmin, then send. The existing success card remains, and the new Pending invitations table shows email, assigned role and UTC expiry. Member/Developer cannot see or manage pending invitations.
+
+Use **Resend** to replace the previous link and renew its 24-hour expiry. Use **Revoke → Confirm revoke** to invalidate an invitation, or Cancel to keep it. To change an invitation's role, revoke and create again. Delivery failures show explicit feedback; failed resends leave no active link and can be retried. The member table and invitation acceptance design are unchanged.
+
+For development testing, start the web server with `EMAIL_MODE=preview` and the matching `NEXT_PUBLIC_APP_URL`. Run `npm run test:e2e -w apps/web -- e2e/invitation-management.spec.ts`, setting `PLAYWRIGHT_BASE_URL` for another port and `PLAYWRIGHT_CHANNEL=msedge` for installed Edge. The journey reads only its own private preview emails, joins a fixture account, checks role/access, resends/revokes, and cleans up fixtures/previews. It requires no domain or Resend account.
+
+Production verification passed with the same journey plus delivery failures and the existing member-management journey. The local test server used `EMAIL_MODE=resend`, `RESEND_API_KEY=re_e2e_preview`, a fixture sender, and `node --require ./e2e/helpers/resend-preview.cjs ../../node_modules/next/dist/bin/next start --port 3100` from `apps/web`, with the existing production build/host settings. Set `E2E_RESEND_STUB=true` only in the test runner to include failure cases. This explicit preload accepts fixture recipients only and captures the Resend HTTP boundary into private previews; it is never imported by the application or used for deployment. Live Resend delivery still requires the separate domain/email verification checklist. TypeScript, targeted lint and production build also passed.
+
+### Members and roles routes (Step 8.4.6)
+
+`/settings/members` redirects to the existing Team Members tab. In Settings, **View role permissions** opens `/settings/roles`, showing the fixed permission matrix for SuperAdmin, Member and Developer. All active verified workspace roles can read it; anonymous/invalid sessions go to login. **Back to Team Members** returns to the existing roster.
+
+The matrix reads the same permission rules used by the backend. Member and Developer currently share read-only access; API-key, membership and billing management are SuperAdmin-only. This page does not edit or create custom roles. Only the previous one-heading route placeholders were replaced; the existing settings design and controls remain.
+
+The extended `e2e/member-management.spec.ts` passed in Edge development, covering both route guards, redirect, navigation and matrix access for all roles alongside the existing membership journey. Web TypeScript and targeted lint also passed.
+
+### Final membership acceptance (Step 8.4.7)
+
+Step 8.4 completed on 2026-09-27. **99 Node tests passed**, including real PostgreSQL concurrency/isolation coverage. All **five Edge journeys passed in both development and production**: accounts, invitations, members/routes, tenant isolation and transactions. The invitation journey follows the same account from invitation and joining through a role change and deactivation, checking already-open sessions after both changes. Production transport is simulated locally; no live Resend delivery is claimed.
+
+Full web lint, database package build, production web build/TypeScript and API TypeScript build passed. All three database migrations are applied locally. Existing designs remain intact; only the two original heading-only route placeholders were replaced during 8.4.6.
+
+Use the [membership demo and testing guide](docs/MEMBERSHIP_TESTING.md) for step-by-step local verification without a domain and the final checks after Resend is ready. The next implementation step is **8.5: billing and audit consistency**, requiring its own sequential plan. Whole-MVP release acceptance remains 8.6. See `BUILD_PLAN.md` for detailed evidence and boundaries.
+
 ## 🛠️ Getting Started & Setup
 
 Follow these steps to set up the project locally:

@@ -1,36 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Mail, Loader2, Check, UserPlus } from "lucide-react";
-import { createMemberInvitation } from "@/app/(dashboard)/settings/invite-action";
+import { createInvitationAction } from "@/app/(dashboard)/settings/invite-action";
+import { ROLE } from "@/lib/constants";
+import { saveInvitationFeedback, useInvitationFeedback } from "./invitation-feedback";
 
-export default function InviteMemberForm() {
+export default function InviteMemberForm({ feedbackKey }: { feedbackKey: string }) {
   const [email, setEmail] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [isPending, setIsPending] = useState(false);
-  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [role, setRole] = useState<string>(ROLE.MEMBER);
+  const submitting = useRef(false);
+  const { feedback, clear } = useInvitationFeedback(feedbackKey);
+  const sentTo = feedback?.kind === "create" && feedback.success ? feedback.email : null;
   const [error, setError] = useState<string | null>(null);
 
   const handleInviteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setIsPending(true);
     setError(null);
-    setSentTo(null);
+    clear();
+    let navigating = false;
 
     try {
-      await createMemberInvitation(email, "Member");
-      setSentTo(email.trim().toLowerCase());
-      setEmail("");
+      const form = new FormData();
+      form.set("email", email);
+      form.set("role", role);
+      const result = await createInvitationAction(null, form);
+      if (!result?.success) { setError(result?.error ?? "Could not confirm the invitation. Refresh before trying again."); return; }
+      saveInvitationFeedback(feedbackKey, { kind: "create", success: true, email: email.trim().toLowerCase(), message: result.message });
+      navigating = true;
+      window.location.reload();
     } catch {
-      setError("We could not send this invitation. Check the address, ensure it does not already have an account, and try again later.");
+      setError("Could not confirm the invitation. Refresh the invitation list before trying again.");
     } finally {
-      setIsPending(false);
+      if (!navigating) { submitting.current = false; setIsPending(false); }
     }
   };
 
-  if (!isOpen) {
+  if (!isOpen && !sentTo) {
     return (
       <Button
         type="button"
@@ -53,7 +66,7 @@ export default function InviteMemberForm() {
           disabled={isPending}
           onClick={() => {
             setIsOpen(false);
-            setSentTo(null);
+            clear();
             setError(null);
           }}
           className="text-xs text-zinc-500 hover:text-zinc-300 disabled:opacity-50"
@@ -81,7 +94,13 @@ export default function InviteMemberForm() {
             />
           </div>
 
-          {error && <p role="alert" className="text-xs font-medium text-red-400">{error}</p>}
+          <label htmlFor="invite-role" className="block text-xs text-zinc-400">Assigned role</label>
+          <select id="invite-role" name="role" value={role} onChange={(event) => setRole(event.target.value)} disabled={isPending}
+            className="w-full rounded-md border border-zinc-700 bg-zinc-950 p-2 text-sm text-white focus-visible:ring-1 focus-visible:ring-zinc-500 disabled:opacity-50">
+            {Object.values(ROLE).map((value) => <option key={value} value={value}>{value}</option>)}
+          </select>
+          {role === ROLE.SUPER_ADMIN && <p className="text-xs text-amber-500">SuperAdmin can manage members, invitations, billing and API keys.</p>}
+          {error && <div role="alert" className="space-y-1 text-xs font-medium text-red-400"><p>{error}</p><a href="/settings?tab=team" className="underline">Refresh invitation list</a></div>}
 
           <Button
             type="submit"
@@ -112,7 +131,7 @@ export default function InviteMemberForm() {
           </div>
           <Button
             type="button"
-            onClick={() => setSentTo(null)}
+            onClick={() => { clear(); setIsOpen(true); setEmail(""); setRole(ROLE.MEMBER); }}
             variant="ghost"
             className="w-full text-xs text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-800 h-8"
           >

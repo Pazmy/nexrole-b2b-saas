@@ -29,7 +29,9 @@ test("local previews complete onboarding, recovery, password change, and invitat
         if (!content.startsWith(`To: ${recipient}\n`)) continue;
         ownPreviewFiles.add(filename);
         const link = content.match(/https?:\/\/\S+/)?.[0];
-        if (link && new URL(link).pathname === route) { found = link; return true; }
+        // Resolve preview paths on the configured local test server, including
+        // production builds whose required public origin uses HTTPS.
+        if (link && new URL(link).pathname === route) { const url = new URL(link); found = url.pathname + url.search; return true; }
       }
       return false;
     }).toBe(true);

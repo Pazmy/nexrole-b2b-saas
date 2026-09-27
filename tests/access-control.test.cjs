@@ -22,7 +22,13 @@ const userId = "33333333-3333-4333-8333-333333333333";
 let session, user, keys, writes, stripeCalls, config, transactionScopes;
 const match = (row, where) => Object.entries(where).every(([k, v]) => row[k] === v);
 const prisma = {
-  $queryRaw: async () => [{ count: 1 }],
+  $transaction: async (callback) => callback(prisma),
+  $queryRaw: async (strings) => {
+    const sql = strings.join('');
+    if (sql.includes('FROM tenants')) return [{ id: user.tenantId }];
+    if (sql.includes('FROM users')) return [{ ...user, role: user.role.name }];
+    return [{ count: 1 }];
+  },
   user: {
     findFirst: async ({ where }) => user && match(user, where) ? user : null,
     findUnique: async ({ where }) => user && match(user, where) ? user : null,
@@ -31,8 +37,12 @@ const prisma = {
     findUnique: async ({ where }) => ({ id: where.id, name: "Workspace", stripeCustomerId: "cus_test" }),
     update: async (args) => { writes.push(args); return args.data; },
   },
-  role: { upsert: async ({ where }) => ({ id: "role-id", name: where.name }) },
-  invitation: { create: async (args) => { writes.push(args); return args.data; } },
+  role: { createMany: async () => ({ count: 1 }), findUniqueOrThrow: async ({ where }) => ({ id: "role-id", name: where.name }) },
+  invitation: {
+    findFirst: async () => null,
+    create: async (args) => { writes.push(args); return { id: crypto.randomUUID(), ...args.data }; },
+    updateMany: async (args) => { assert.equal(args.where.tenantId, tenantA); assert.ok(args.where.token); return { count: 1 }; },
+  },
   apiKey: {
     create: async ({ data }) => { const key = { id: "new-key", ...data }; keys.push(key); writes.push(key); return key; },
     findFirst: async ({ where }) => keys.find((k) => match(k, where)) ?? null,
@@ -177,7 +187,7 @@ test("admin mutations use the verified tenant and cannot revoke another tenant's
   assert.equal(writes.at(-1).where.id, tenantA);
   await createMemberInvitation("member@example.test");
   assert.equal(writes.at(-1).data.tenantId, tenantA);
-  await assert.rejects(() => createMemberInvitation("member@example.test", "CustomAdmin"), /Invalid workspace role/);
+  await assert.rejects(() => createMemberInvitation("member@example.test", "CustomAdmin"), /Invalid option/);
 });
 
 test("authorized administrator can open checkout and the customer portal", async () => {
