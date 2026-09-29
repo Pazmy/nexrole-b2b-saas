@@ -9,6 +9,7 @@ export interface BillingStatusSummary {
   currentUsage: number;
   maxUsage: number | null;
   tier: string;
+  subscriptionStatus: string;
 }
 
 // Presentation summary only. Transaction services enforce fresh policy inside locks.
@@ -21,6 +22,7 @@ export async function checkTenantBillingStatus(tenantId: string): Promise<Billin
   return {
     isLocked: !decision.allowed,
     reason: decision.allowed ? "none" : decision.reason === "creation_limit_reached" ? "usage_limit_exceeded" : "subscription_restricted",
+    subscriptionStatus: tenant?.subscriptionStatus ?? "unknown",
     currentUsage,
     maxUsage: entitlement.maxStoredTransactions,
     tier: entitlement.tier === "free" ? "Free Tier" : entitlement.tier === "pro" ? "Pro Tier" : "Restricted",

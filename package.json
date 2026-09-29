@@ -21,7 +21,12 @@
     "test:transactions:db": "node --test tests/transactions-db.test.cjs",
     "test:membership:rules": "node --test tests/membership-rules.test.cjs",
     "test:membership:db": "node --test tests/membership-db.test.cjs",
-    "test:invitations:db": "node --test tests/invitations-db.test.cjs"
+    "test:invitations:db": "node --test tests/invitations-db.test.cjs",
+    "test:billing:rules": "node --test tests/billing-rules.test.cjs",
+    "test:billing:db": "node --test tests/billing-foundation-db.test.cjs tests/billing-service-db.test.cjs",
+    "test:billing:provider": "node --test tests/billing-provider.test.cjs",
+    "test:billing:webhook": "node --test tests/billing-webhook-db.test.cjs",
+    "test:audit:db": "node --test tests/mutation-audit-db.test.cjs"
   },
   "engines": {
     "node": ">=22.15.0"

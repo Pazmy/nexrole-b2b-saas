@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@nexrole/database";
+import { prisma, writeRequiredAudit } from "@nexrole/database";
 import { AccessDeniedError, requirePermission } from "./authorization";
 import { hasPermission } from "./permissions";
 import { updateTransactionStatusSchema } from "./transaction-rules";
@@ -38,6 +38,8 @@ export async function updateTransactionStatus(input: unknown) {
     // No count check: reaching the Free creation limit must not block status updates.
     const result = await tx.transaction.updateMany({ where: { ...where, status: "pending" }, data: { status: values.status } });
     if (result.count !== 1) throw new TransactionStatusError("status_conflict");
+    await writeRequiredAudit(tx, { tenantId: actor.tenantId, actor: { kind: "user", id: actor.id, tenantId: actor.tenantId },
+      action: "TRANSACTION_STATUS_CHANGED", details: { targetId: values.id, previousStatus: "pending", status: values.status } });
     return { id: values.id, status: values.status };
   }, { isolationLevel: "ReadCommitted", maxWait: 5_000, timeout: 10_000 });
 }

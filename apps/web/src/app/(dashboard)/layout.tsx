@@ -112,6 +112,7 @@ export default async function DashboardLayout({
           {billingCheck.isLocked && billingCheck.reason !== "none" && (
             <BillingAlertBanner
               reason={billingCheck.reason}
+              subscriptionStatus={billingCheck.subscriptionStatus}
               tier={billingCheck.tier}
               usage={billingCheck.currentUsage}
               max={billingCheck.maxUsage}

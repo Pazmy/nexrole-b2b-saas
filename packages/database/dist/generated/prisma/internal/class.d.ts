@@ -206,6 +206,17 @@ export interface PrismaClient<in LogOpts extends Prisma.LogLevel = never, in out
         omit: OmitOpts;
     }>;
     /**
+     * `prisma.externalOperation`: Exposes CRUD operations for the **ExternalOperation** model.
+      * Example usage:
+      * ```ts
+      * // Fetch zero or more ExternalOperations
+      * const externalOperations = await prisma.externalOperation.findMany()
+      * ```
+      */
+    get externalOperation(): Prisma.ExternalOperationDelegate<ExtArgs, {
+        omit: OmitOpts;
+    }>;
+    /**
      * `prisma.accountToken`: Exposes CRUD operations for the **AccountToken** model.
       * Example usage:
       * ```ts

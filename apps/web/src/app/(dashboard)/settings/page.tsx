@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/authorization";
 import { hasPermission } from "@/lib/permissions";
 import { prisma } from "@nexrole/database";
+import { checkTenantBillingStatus } from "@/lib/billing-guard";
 import ProfileForm from "./_components/ProfileForm";
 import InviteMemberForm from "@/components/invite-member-form";
 import MemberControls from "@/components/member-controls";
@@ -13,7 +14,7 @@ import { ROLE } from "@/lib/constants";
 import { Code2 } from "lucide-react"; // Custom tab icon
 
 interface PageProps {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; billing_success?: string }>;
 }
 
 enum Tabs {
@@ -30,7 +31,7 @@ export default async function SettingsPage({ searchParams }: PageProps) {
 
   const invitationFeedbackKey = `invitation-feedback:${tenantId}:${actorId}`;
   const [tenant, teamMembers, apiKeys, invitations] = await Promise.all([
-    prisma.tenant.findUnique({ where: { id: tenantId }, select: { name: true, subscriptionStatus: true } }),
+    prisma.tenant.findUnique({ where: { id: tenantId }, select: { name: true, subscriptionStatus: true, stripeCustomerId: true, stripeSubscriptionId: true, billingSyncStatus: true, subscriptionCancelAtPeriodEnd: true, subscriptionCancelAt: true, externalOperations: { where: { kind: "checkout_create", state: { in: ["pending", "unknown", "open"] } }, select: { state: true }, take: 1 } } }),
     prisma.user.findMany({
       where: { tenantId },
       select: { id: true, email: true, createdAt: true, isActive: true, emailVerifiedAt: true, role: { select: { name: true } } },
@@ -43,6 +44,8 @@ export default async function SettingsPage({ searchParams }: PageProps) {
     }) : Promise.resolve([]),
     activeTab === Tabs.Team && hasPermission(userRole, "invitations:manage") ? listInvitations() : Promise.resolve([]),
   ]);
+
+  const billing = await checkTenantBillingStatus(tenantId);
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -109,7 +112,12 @@ export default async function SettingsPage({ searchParams }: PageProps) {
             </p>
           </div>
 
-          <ProfileForm tenant={tenant} userRole={userRole} />
+          <ProfileForm tenant={tenant ? { name: tenant.name, subscriptionStatus: tenant.subscriptionStatus } : null} userRole={userRole}
+            returned={resolvedParams.billing_success === "true"} feedbackKey={`billing-feedback:${tenantId}:${actorId}`}
+            billing={{ status: tenant?.subscriptionStatus ?? "unknown", usage: billing.currentUsage,
+              hasCustomer: !!tenant?.stripeCustomerId, hasSubscription: !!tenant?.stripeSubscriptionId,
+              syncStatus: tenant?.billingSyncStatus ?? "unverified", pendingCheckout: !!tenant?.externalOperations.length,
+              cancelAtPeriodEnd: tenant?.subscriptionCancelAtPeriodEnd ?? false, cancelAt: tenant?.subscriptionCancelAt?.toISOString() ?? null }} />
         </div>
       )}
 

@@ -4,6 +4,7 @@ import { CreditCard, AlertTriangle, ArrowUpRight } from "lucide-react";
 interface BillingAlertBannerProps {
   reason: "subscription_restricted" | "usage_limit_exceeded";
   tier: string;
+  subscriptionStatus?: string;
   usage: number;
   max: number | null;
   canManageBilling: boolean;
@@ -12,6 +13,7 @@ interface BillingAlertBannerProps {
 export default function BillingAlertBanner({
   reason,
   tier,
+  subscriptionStatus,
   usage,
   max,
   canManageBilling,
@@ -38,7 +40,7 @@ export default function BillingAlertBanner({
           </h4>
           <p className="text-xs text-zinc-400 mt-0.5 leading-relaxed">
             {reason === "subscription_restricted"
-              ? "Your subscription does not currently allow transaction changes. You can still view your workspace and review billing settings."
+              ? `Subscription ${subscriptionStatus?.replaceAll("_", " ") || "unknown"}: transaction changes are restricted. You can still view your workspace, manage membership, recover your account and review billing settings.`
               : `Your workspace has ${usage} of ${max} stored transactions on ${tier}. New transactions are disabled; existing Pending transactions can still be updated.`}
           </p>
         </div>

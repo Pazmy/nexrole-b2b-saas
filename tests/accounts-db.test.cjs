@@ -44,7 +44,12 @@ test('account lifecycle against PostgreSQL in an isolated disposable schema', { 
       await admin.query('DELETE FROM invitations; DELETE FROM users; DELETE FROM tenants; DELETE FROM roles;');
     });
 
-    await admin.query(fs.readFileSync('packages/database/prisma/migrations/20260927000000_unique_invitations/migration.sql', 'utf8'));
+    // The first two migrations have dedicated legacy-data assertions above.
+    // Apply every later migration so this regression uses the current client schema.
+    for (const directory of fs.readdirSync('packages/database/prisma/migrations').sort()) {
+      const file = `packages/database/prisma/migrations/${directory}/migration.sql`;
+      if (directory > '20260921000000_account_recovery' && fs.existsSync(file)) await admin.query(fs.readFileSync(file, 'utf8'));
+    }
     process.env.NODE_ENV = 'test'; process.env.EMAIL_MODE = 'preview'; process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
     harness = require('./account-harness.cjs')(prisma, async (email, purpose, token) => {
       if (failDelivery) throw new Error('simulated delivery failure');

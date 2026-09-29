@@ -19,6 +19,13 @@ model Tenant {
   name               String
   subscriptionStatus String        @default("free") // active, past_due, canceled, free
   stripeCustomerId   String?       @unique // Stripe customer mapping
+  stripeSubscriptionId String?     @unique
+  subscriptionCancelAtPeriodEnd Boolean @default(false)
+  subscriptionCancelAt DateTime?
+  billingSyncStatus String @default("unverified")
+  billingLeaseOwner String? @db.Uuid
+  billingLeaseExpiresAt DateTime?
+  billingVersion BigInt @default(0)
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
@@ -26,6 +33,7 @@ model Tenant {
   transactions       Transaction[]
   apiKeys            ApiKey[]
   auditLogs          AuditLog[]
+  externalOperations ExternalOperation[]
 
   @@map("tenants")
 }
@@ -125,6 +133,11 @@ model AuditLog {
   action     String   // e.g., "TENANT_PROFILE_UPDATED", "MEMBER_INVITED", etc.
   actorId    String?  @db.Uuid
   actorEmail String?
+  actorSource String @default("legacy")
+  sourceEventId String?
+  operationId String? @db.Uuid
+  phase String?
+  operation ExternalOperation? @relation(fields: [tenantId, operationId], references: [tenantId, id], onDelete: NoAction, onUpdate: NoAction)
   tenantId   String   @db.Uuid
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   ipAddress  String?
@@ -134,14 +147,51 @@ model AuditLog {
 
   @@index([tenantId])
   @@index([createdAt])
+  @@unique([tenantId, operationId, phase])
   @@map("audit_logs")
 }
 
 model ProcessedStripeEvent {
   id        String   @id
   createdAt DateTime @default(now())
+  eventType String?
+  livemode Boolean?
+  resourceId String?
+  customerId String?
+  subscriptionId String?
+  tenantId String? @db.Uuid
+  disposition String @default("processed")
+  reasonCode String?
+  processedAt DateTime?
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([tenantId, disposition])
 
   @@map("processed_stripe_events")
+}
+
+model ExternalOperation {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @db.Uuid
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actorId String? @db.Uuid
+  kind String
+  idempotencyKey String @unique
+  parameterFingerprint String
+  providerObjectId String?
+  invitationId String? @db.Uuid
+  invitationGeneration String? @db.Uuid
+  state String @default("pending")
+  outcomeCode String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  resolvedAt DateTime?
+  auditLogs AuditLog[]
+
+  @@unique([tenantId, id])
+  @@unique([invitationId, invitationGeneration])
+  @@index([tenantId, state])
+  @@map("external_operations")
 }
 
 model AccountToken {

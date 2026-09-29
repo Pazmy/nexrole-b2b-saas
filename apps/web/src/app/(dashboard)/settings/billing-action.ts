@@ -1,103 +1,46 @@
 "use server";
 
 import { requirePermission } from "@/lib/authorization";
-import Stripe from "stripe";
+import { getBillingService, getBillingReconciler } from "@/lib/stripe-billing";
+import { BillingError, ReconciliationError } from "@nexrole/database";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@nexrole/database";
 
-let stripeInstance: Stripe | null = null;
-function getStripe() {
-  if (!stripeInstance) {
-    const apiKey = process.env.STRIPE_SECRET_KEY;
-    if (!apiKey) {
-      throw new Error("STRIPE_SECRET_KEY is not defined");
-    }
-    stripeInstance = new Stripe(apiKey, {
-      apiVersion: "2026-06-24.dahlia",
-    });
-  }
-  return stripeInstance;
-}
-
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
-// 1. TRIGGER STRIPE CHECKOUT (For Upgrading from Free to Pro)
 export async function startCheckoutSession() {
-  const { tenantId, email: userEmail } = await requirePermission("billing:manage");
-
-  // Create a secure hosted checkout window
-  const checkoutSession = await getStripe().checkout.sessions.create({
-    customer_email: userEmail,
-    payment_method_types: ["card"],
-    line_items: [
-      {
-        price: process.env.STRIPE_PRO_PRICE_ID, // Your Stripe Product Price ID (e.g., prod_xyz)
-        quantity: 1,
-      },
-    ],
-    mode: "subscription",
-    success_url: `${BASE_URL}/settings?tab=profile&billing_success=true`,
-    cancel_url: `${BASE_URL}/settings?tab=profile`,
-    metadata: {
-      tenantId: tenantId, // ⬅️ The key hook! Passed to Stripe, returned to our Webhook
-    },
-    subscription_data: {
-      metadata: {
-        tenantId: tenantId,
-      },
-    },
-  });
-
-  if (!checkoutSession.url)
-    throw new Error("Stripe routing allocation failed.");
-
-  redirect(checkoutSession.url);
+  const actor = await requirePermission("billing:manage");
+  await getBillingReconciler().reconcile(actor);
+  const url = await getBillingService().start(actor, "checkout");
+  redirect(url);
 }
 
-// 2. TRIGGER STRIPE CUSTOMER PORTAL (For Resolving Past Due Billing Errors)
-export async function startCustomerPortalSession() {
-  const { tenantId, email: userEmail } = await requirePermission("billing:manage");
-
-  // Fetch the tenant from the database to see if we already have a customer ID mapped
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: { stripeCustomerId: true },
-  });
-
-  let customerId = tenant?.stripeCustomerId;
-
-  // If not found in database (e.g. local development or fallback), look up/create dynamically in Stripe
-  if (!customerId) {
-    const customers = await getStripe().customers.list({
-      email: userEmail,
-      limit: 1,
-    });
-
-    if (customers.data.length > 0) {
-      customerId = customers.data[0].id;
-    } else {
-      const customer = await getStripe().customers.create({
-        email: userEmail,
-        metadata: {
-          tenantId: tenantId,
-        },
-      });
-      customerId = customer.id;
-    }
-
-    // Save the customerId back to the database for future requests
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: { stripeCustomerId: customerId },
-    });
+export async function reconcileBillingAction() {
+  const actor = await requirePermission("billing:manage");
+  try {
+    const result = await getBillingReconciler().reconcile(actor);
+    try { revalidatePath("/settings"); revalidatePath("/transactions"); } catch { /* A committed reconciliation remains successful. */ }
+    return { success: true as const, reason: result.reason };
+  } catch (error) {
+    if (error instanceof BillingError || error instanceof ReconciliationError) return { success: false as const, code: error.code, error: error.message };
+    return { success: false as const, code: "unavailable", error: "Billing synchronization could not be confirmed. Retry shortly." };
   }
+}
 
-  const portalSession = await getStripe().billingPortal.sessions.create({
-    return_url: `${BASE_URL}/settings`,
-    customer: customerId,
-  });
+export async function startCustomerPortalSession() {
+  const actor = await requirePermission("billing:manage");
+  const url = await getBillingService().start(actor, "portal");
+  redirect(url);
+}
 
-  if (!portalSession.url) throw new Error("Stripe portal routing failed.");
-
-  redirect(portalSession.url);
+// Structured transport for inline feedback; service authorization remains authoritative.
+export async function requestBillingSession(intent: "checkout" | "portal") {
+  const actor = await requirePermission("billing:manage");
+  try {
+    if (intent !== "checkout" && intent !== "portal") return { success: false as const, error: "Invalid billing request." };
+    if (intent === "checkout") await getBillingReconciler().reconcile(actor);
+    const url = await getBillingService().start(actor, intent);
+    return { success: true as const, url };
+  } catch (error) {
+    return { success: false as const, error: error instanceof BillingError || error instanceof ReconciliationError
+      ? error.message : "The billing outcome could not be confirmed. Retry to recover the existing request." };
+  }
 }

@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
-import { prisma } from "@nexrole/database";
+import { prisma, writeRequiredAudit } from "@nexrole/database";
 import { emailConfig } from "./email-config";
 import { sendAccountEmail } from "./email";
 import { isWorkspaceRole } from "./permissions";
@@ -113,11 +113,13 @@ export async function acceptInvitation(token: string, password: string) {
       if (!role || !isWorkspaceRole(role.name)) throw new AccountError(INVALID_LINK);
       const consumed = await tx.invitation.deleteMany({ where: { token: tokenHash, expiresAt: { gt: new Date() } } });
       if (consumed.count !== 1) throw new AccountError(INVALID_LINK);
-      await tx.user.create({ data: {
+      const member = await tx.user.create({ data: {
         email: invitation.email, passwordHash, roleId: invitation.roleId, tenantId: invitation.tenantId,
         // Possession of an invitation delivered to this address proves email ownership.
         emailVerifiedAt: new Date(),
       } });
+      await writeRequiredAudit(tx, { tenantId: invitation.tenantId, actor: { kind: "user", id: member.id, tenantId: invitation.tenantId },
+        action: "INVITATION_ACCEPTED", details: { targetId: invitation.id, memberId: member.id, role: role.name as "SuperAdmin" | "Member" | "Developer" } });
     });
   } catch (error) {
     if (isDuplicate(error)) throw new AccountError("An account with this email already exists. Sign in with that account.");

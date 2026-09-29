@@ -5,14 +5,12 @@ import { revalidatePath } from "next/cache";
 import { AccessDeniedError } from "@/lib/authorization";
 import { RateLimitError } from "@/lib/account-rate-limit";
 import { createInvitation, resendInvitation, revokeInvitation, InvitationError } from "@/lib/manage-invitation";
-import { writeAuditLog } from "@/lib/audit";
 
 export type InvitationActionState = { success: true; id: string; message: string } | { success: false; code: string; error: string } | null;
 
 async function perform(input: unknown, operation: "create" | "resend" | "revoke"): Promise<InvitationActionState> {
   try {
     const result = await (operation === "create" ? createInvitation : operation === "resend" ? resendInvitation : revokeInvitation)(input);
-    if (operation === "create") await writeAuditLog("MEMBER_INVITED", { invitationId: result.id });
     try { revalidatePath("/settings"); revalidatePath("/settings/members"); }
     catch { console.error("Invitation changed, but cache refresh failed."); }
     return { success: true, id: result.id, message: operation === "revoke" ? "Invitation revoked." : "Invitation email sent." };

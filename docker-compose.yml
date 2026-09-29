@@ -52,6 +52,7 @@ services:
       AUTH_SECRET: ${DOCKER_AUTH_SECRET:-super_secure_nextauth_secret_token_string_32}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY in the root .env}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?Set STRIPE_WEBHOOK_SECRET in the root .env}
+      STRIPE_PRO_PRICE_ID: ${STRIPE_PRO_PRICE_ID:?Set STRIPE_PRO_PRICE_ID in the root .env}
     depends_on:
       db_init:
         condition: service_completed_successfully

@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@nexrole/database";
+import { prisma, writeRequiredAudit } from "@nexrole/database";
 import { AccessDeniedError, requirePermission } from "./authorization";
 import { hasPermission } from "./permissions";
 import { changeMemberRoleSchema, deactivateMemberSchema, getMemberChangeDecision } from "./membership-rules";
@@ -56,6 +56,12 @@ async function manageMember(input: unknown, operation: "change-role" | "deactiva
       data: { ...(change.operation === "deactivate" ? { isActive: false } : { roleId }), sessionVersion: { increment: 1 } },
     });
     if (updated.count !== 1) throw new MemberManagementError("invalid_state");
+    const source = { kind: "user" as const, id: actor.id, tenantId: actor.tenantId };
+    if (change.operation === "change-role") {
+      await writeRequiredAudit(tx, { tenantId: actor.tenantId, actor: source, action: "MEMBER_ROLE_CHANGED",
+        details: { targetId: target.id, previousRole: target.role as "SuperAdmin" | "Member" | "Developer", role: change.role } });
+    } else await writeRequiredAudit(tx, { tenantId: actor.tenantId, actor: source, action: "MEMBER_DEACTIVATED",
+      details: { targetId: target.id, previousActive: target.isActive, active: false } });
     return { id: target.id, selfChanged: target.id === actor.id };
   }, { isolationLevel: "ReadCommitted", maxWait: 5_000, timeout: 10_000 });
 }

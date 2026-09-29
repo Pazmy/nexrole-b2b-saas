@@ -48,9 +48,10 @@ Create and resend share a limit of 10 attempts per workspace per 15 minutes, in 
 From the repository root:
 
 ```powershell
-node --test tests/access-control.test.cjs tests/accounts.test.cjs tests/membership-rules.test.cjs tests/transaction-rules.test.cjs tests/accounts-db.test.cjs tests/membership-db.test.cjs tests/invitations-db.test.cjs tests/transactions-db.test.cjs
-npm.cmd run lint -w apps/web
 npm.cmd run build -w packages/database
+node --test tests/access-control.test.cjs tests/accounts.test.cjs tests/membership-rules.test.cjs tests/transaction-rules.test.cjs tests/accounts-db.test.cjs tests/membership-db.test.cjs tests/invitations-db.test.cjs tests/transactions-db.test.cjs
+npm.cmd run test:audit:db
+npm.cmd run lint -w apps/web
 npm.cmd run build -w apps/api
 ```
 
@@ -65,6 +66,14 @@ npm.cmd run test:e2e
 The invitation journey follows the same account through a role change and deactivation, including browser sessions that are already open. Test workspace fixtures and their preview files are cleaned up afterward.
 
 Local production testing uses the test-only transport helper described in the [README](../README.md#invitation-ui-step-845). This helper is not used for deployment and does not verify real Resend delivery.
+
+## Required audit behavior (8.5.5)
+
+Member role/deactivation and invitation revoke/acceptance now require audit in the same database transaction. Failed audit must leave the old role, active state, session version or invitation usable state intact. Self-deactivation audit retains the original verified actor even though their next request must sign in again.
+
+Create/resend records a durable delivery request while the replacement token is expired. Only successful activation and required audit make that token usable. If the email was accepted but activation could not be confirmed, refresh the invitation list and use Resend to issue a fresh generation; the earlier link must remain unusable. Provider failures can leave an unknown operation outcome. A failed create may be removed after its outcome is audited; if an expired row remains, use Resend. Do not reuse a link from an interrupted attempt.
+
+Run `npm.cmd run test:audit:db` for isolated PostgreSQL audit-failure, rollback, redaction and delivery-race checks. The tests inject audit failures only inside disposable test schemas and replace email transport. No audit-history UI was added; broader browser acceptance is scheduled for 8.5.7.
 
 ## After the Resend domain is ready
 

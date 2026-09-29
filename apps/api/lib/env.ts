@@ -32,6 +32,7 @@ const envSchema = z.object({
   AUTH_SECRET: z.string().min(1),
   STRIPE_SECRET_KEY: z.string().min(1),
   STRIPE_WEBHOOK_SECRET: z.string().min(1),
+  STRIPE_PRO_PRICE_ID: z.string().optional(),
   ALLOWED_ORIGINS: z.string().optional(),
 });
 

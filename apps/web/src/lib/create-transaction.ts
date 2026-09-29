@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@nexrole/database";
+import { prisma, writeRequiredAudit } from "@nexrole/database";
 import { AccessDeniedError, requirePermission } from "./authorization";
 import { hasPermission } from "./permissions";
 import { createTransactionSchema, INITIAL_TRANSACTION_STATUS } from "./transaction-rules";
@@ -47,7 +47,7 @@ export async function createTransaction(input: unknown): Promise<{ id: string }>
       throw new Error("Invalid transaction creation policy state.");
     }
 
-    return tx.transaction.create({
+    const created = await tx.transaction.create({
       data: {
         description: values.description,
         amount: values.amount,
@@ -57,5 +57,8 @@ export async function createTransaction(input: unknown): Promise<{ id: string }>
       },
       select: { id: true },
     });
+    await writeRequiredAudit(tx, { tenantId: actor.tenantId, actor: { kind: "user", id: actor.id, tenantId: actor.tenantId },
+      action: "TRANSACTION_CREATED", details: { targetId: created.id, amount: values.amount, currency: "USD", status: "pending" } });
+    return created;
   }, { isolationLevel: "ReadCommitted", maxWait: 5_000, timeout: 10_000 });
 }

@@ -75,6 +75,7 @@ export const ModelName = {
     ApiKey: 'ApiKey',
     AuditLog: 'AuditLog',
     ProcessedStripeEvent: 'ProcessedStripeEvent',
+    ExternalOperation: 'ExternalOperation',
     AccountToken: 'AccountToken',
     AuthRateLimit: 'AuthRateLimit'
 };
@@ -92,6 +93,13 @@ export const TenantScalarFieldEnum = {
     name: 'name',
     subscriptionStatus: 'subscriptionStatus',
     stripeCustomerId: 'stripeCustomerId',
+    stripeSubscriptionId: 'stripeSubscriptionId',
+    subscriptionCancelAtPeriodEnd: 'subscriptionCancelAtPeriodEnd',
+    subscriptionCancelAt: 'subscriptionCancelAt',
+    billingSyncStatus: 'billingSyncStatus',
+    billingLeaseOwner: 'billingLeaseOwner',
+    billingLeaseExpiresAt: 'billingLeaseExpiresAt',
+    billingVersion: 'billingVersion',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };
@@ -145,6 +153,10 @@ export const AuditLogScalarFieldEnum = {
     action: 'action',
     actorId: 'actorId',
     actorEmail: 'actorEmail',
+    actorSource: 'actorSource',
+    sourceEventId: 'sourceEventId',
+    operationId: 'operationId',
+    phase: 'phase',
     tenantId: 'tenantId',
     ipAddress: 'ipAddress',
     userAgent: 'userAgent',
@@ -153,7 +165,33 @@ export const AuditLogScalarFieldEnum = {
 };
 export const ProcessedStripeEventScalarFieldEnum = {
     id: 'id',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    eventType: 'eventType',
+    livemode: 'livemode',
+    resourceId: 'resourceId',
+    customerId: 'customerId',
+    subscriptionId: 'subscriptionId',
+    tenantId: 'tenantId',
+    disposition: 'disposition',
+    reasonCode: 'reasonCode',
+    processedAt: 'processedAt',
+    updatedAt: 'updatedAt'
+};
+export const ExternalOperationScalarFieldEnum = {
+    id: 'id',
+    tenantId: 'tenantId',
+    actorId: 'actorId',
+    kind: 'kind',
+    idempotencyKey: 'idempotencyKey',
+    parameterFingerprint: 'parameterFingerprint',
+    providerObjectId: 'providerObjectId',
+    invitationId: 'invitationId',
+    invitationGeneration: 'invitationGeneration',
+    state: 'state',
+    outcomeCode: 'outcomeCode',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    resolvedAt: 'resolvedAt'
 };
 export const AccountTokenScalarFieldEnum = {
     tokenHash: 'tokenHash',
