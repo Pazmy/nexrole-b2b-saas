@@ -228,6 +228,32 @@ test('signed billing webhooks and reconciliation against migrated PostgreSQL', {
       assert.equal((await post(e)).body.reason, 'duplicate'); assert.equal((await audits(f)).length, 1);
     });
 
+    await t.test('different events competing for one tenant recover by redelivery; status check does not drain receipts', async () => {
+      const f = await fixture(); f.sub.status = 'past_due';
+      const firstEvent = event('customer.subscription.updated', f.sub);
+      const secondEvent = event('customer.subscription.updated', f.sub);
+      const entered = deferred(), release = deferred();
+      listHook = async (kind, customer) => {
+        if (kind === 'subscription' && customer === f.customerId) { entered.resolve(); await release.promise; }
+      };
+      const first = post(firstEvent);
+      try {
+        await entered.promise;
+        assert.equal((await post(secondEvent)).status, 503);
+        assert.equal((await receipt(secondEvent)).disposition, 'pending');
+      } finally {
+        release.resolve(); listHook = null;
+        assert.equal((await first).status, 200);
+      }
+      await reconciler.reconcile({ id: f.actor.id, tenantId: f.tenant.id, sessionVersion: f.actor.sessionVersion });
+      assert.equal((await current(f)).subscriptionStatus, 'past_due');
+      assert.equal((await receipt(secondEvent)).disposition, 'pending');
+      assert.equal((await post(secondEvent)).status, 200);
+      assert.equal((await receipt(secondEvent)).disposition, 'processed');
+      assert.equal((await post(secondEvent)).body.reason, 'duplicate');
+      assert.equal((await audits(f)).length, 1);
+    });
+
     await t.test('expired lease fences stale fetches even when a later delivery has already applied newer state', async () => {
       const f = await fixture(); const slowEvent = event('customer.subscription.updated', f.sub), newEvent = event('customer.subscription.updated', f.sub);
       const entered = deferred(), release = deferred(); let reads = 0;

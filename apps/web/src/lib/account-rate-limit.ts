@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { prisma } from "@nexrole/database";
 
 export class RateLimitError extends Error {
-  constructor() { super("Too many attempts. Please wait 15 minutes and try again."); }
+  constructor() { super("Too many attempts. Please try again when the 15-minute request window has ended."); }
 }
 
 export async function takeLimit(scope: string, identity: string, maximum: number) {

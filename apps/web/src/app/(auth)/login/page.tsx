@@ -99,7 +99,10 @@ export default function LoginPage() {
             />
 
             {error && (
-              <p className="text-sm font-medium text-red-500">{error}</p>
+              <div className="space-y-2">
+                <p role="alert" className="text-sm font-medium text-red-500">{error}</p>
+                <Link href="/verify-email" className="text-sm text-blue-400 hover:underline">Resend verification</Link>
+              </div>
             )}
 
             <Button
@@ -114,7 +117,6 @@ export default function LoginPage() {
         <nav className="flex flex-wrap gap-4 text-sm text-blue-400">
           <Link href="/register">Create a workspace</Link>
           <Link href="/forgot-password">Forgot password</Link>
-          <Link href="/verify-email">Resend verification</Link>
         </nav>
       </div>
     </div>

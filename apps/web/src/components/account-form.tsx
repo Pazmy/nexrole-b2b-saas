@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import type { AccountState } from "@/lib/account-validation";
 
 type Field = { name: string; label: string; type: "email" | "password"; autoComplete?: string };
-export function AccountForm({ title, description, action, fields = [], token, button, finishOnSuccess = true }: {
+type RecoveryLink = { href: string; label: string };
+export function AccountForm({ title, description, action, fields = [], token, button, finishOnSuccess = true, errorLinks = [] }: {
   title: string; description: string; action: (state: AccountState, form: FormData) => Promise<AccountState>;
-  fields?: Field[]; token?: string; button: string; finishOnSuccess?: boolean;
+  fields?: Field[]; token?: string; button: string; finishOnSuccess?: boolean; errorLinks?: RecoveryLink[];
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   return <section className="mx-auto w-full max-w-md space-y-5 rounded-xl border border-zinc-800 bg-zinc-900 p-8 text-zinc-100">
@@ -28,7 +29,8 @@ export function AccountForm({ title, description, action, fields = [], token, bu
       <Button type="submit" disabled={pending} className="w-full">{pending ? "Please wait..." : button}</Button>
     </form>}
     <nav className="flex flex-wrap gap-4 text-sm text-blue-400">
-      <Link href="/login">Sign in</Link><Link href="/verify-email">Resend verification</Link><Link href="/forgot-password">Forgot password</Link>
+      <Link href="/login">Sign in</Link>
+      {state?.error && !state.success && errorLinks.map((link) => <Link key={link.href} href={link.href}>{link.label}</Link>)}
     </nav>
   </section>;
 }

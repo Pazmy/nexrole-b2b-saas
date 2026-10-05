@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 // Allow first-request compilation when this suite runs against the development server.
 const expect = baseExpect.configure({ timeout: 20_000 });
 
-test("local previews complete onboarding, recovery, password change, and invitation acceptance", async ({ browser }) => {
+test("new workspace completes onboarding, transactions, recovery, invitation, role restrictions and deactivation", async ({ browser }) => {
   test.setTimeout(180_000);
   const suffix = randomUUID();
   const email = `owner-${suffix}@example.test`;
@@ -68,6 +68,8 @@ test("local previews complete onboarding, recovery, password change, and invitat
     await page.getByRole("button", { name: "Create transaction", exact: true }).click();
     await expect(page.getByRole("status").filter({ hasText: "Transaction created." })).toBeVisible();
     await page.getByRole("link", { name: "First workspace transaction", exact: true }).click();
+    await expect(page).toHaveURL(/\/transactions\/[0-9a-f-]+$/);
+    const transactionPath = new URL(page.url()).pathname;
     await page.getByRole("button", { name: "Save status", exact: true }).click();
     await expect(page.getByRole("status")).toContainText("Transaction marked completed.");
     await page.getByRole("link", { name: "Overview", exact: true }).click();
@@ -118,6 +120,81 @@ test("local previews complete onboarding, recovery, password change, and invitat
     await page.goto(verify);
     await page.getByRole("button", { name: "Verify email", exact: true }).click();
     await expect(page.locator("form").getByRole("alert")).toContainText("already used");
+    // Complete the same registered workspace's journey with the invited account.
+    await otherPage.goto("/transactions");
+    await expect(otherPage.getByRole("heading", { name: "Ledger Operations" })).toBeVisible();
+    await expect(otherPage.getByRole("link", { name: "First workspace transaction", exact: true })).toBeVisible();
+    await expect(otherPage.getByRole("button", { name: "New transaction", exact: true })).toHaveCount(0);
+    await otherPage.goto(transactionPath);
+    await expect(otherPage.getByText("First workspace transaction", { exact: true })).toBeVisible();
+    await expect(otherPage.getByRole("button", { name: "Save status", exact: true })).toHaveCount(0);
+    await otherPage.goto("/settings?tab=profile");
+    await expect(otherPage.getByLabel("Company Legal Name")).toHaveValue(company);
+    await expect(otherPage.getByLabel("Company Legal Name")).toBeDisabled();
+    await expect(otherPage.getByRole("button", { name: "Manage billing", exact: true })).toHaveCount(0);
+    await expect(otherPage.getByRole("button", { name: "Upgrade Workspace Account", exact: true })).toHaveCount(0);
+    await otherPage.goto("/settings?tab=team");
+    await expect(otherPage.getByRole("heading", { name: "Membership Log", exact: true })).toBeVisible();
+    await expect(otherPage.getByRole("row").filter({ hasText: teammate }).getByText("Member", { exact: true })).toBeVisible();
+    await expect(otherPage.getByRole("button", { name: "+ Invite Workspace Member", exact: true })).toHaveCount(0);
+    await expect(otherPage.getByRole("combobox")).toHaveCount(0);
+    await expect(otherPage.getByRole("button", { name: "Deactivate", exact: true })).toHaveCount(0);
+
+    await page.goto("/settings?tab=team");
+    const joinedRow = page.getByRole("row").filter({ hasText: teammate });
+    await joinedRow.getByRole("button", { name: "Deactivate", exact: true }).click();
+    await joinedRow.getByRole("button", { name: "Confirm deactivation", exact: true }).click();
+    await expect(joinedRow.getByRole("status")).toHaveText("Member deactivated.");
+    await expect(joinedRow.getByText("Inactive", { exact: true })).toBeVisible();
+    // The member's already-open session must fail its next protected request.
+    await otherPage.goto(transactionPath);
+    await expect(otherPage).toHaveURL(/\/login/);
+    await otherPage.locator('input[type="email"]').fill(teammate);
+    await otherPage.locator('input[type="password"]').fill("teammate-password-123");
+    await otherPage.getByRole("button", { name: "Sign In", exact: true }).click();
+    await expect(otherPage.getByText("Unable to sign in. Check your email and password, verify your email, or wait 15 minutes if you have tried repeatedly.", { exact: true })).toBeVisible();
+    await expect(otherPage).toHaveURL(/\/login/);
+    await page.goto(transactionPath);
+    await expect(page.getByText("First workspace transaction", { exact: true })).toBeVisible();
+
+    // Assert authoritative state and actor attribution before fixture cleanup.
+    const evidence = new pg.Client({ connectionString: process.env.DATABASE_URL });
+    await evidence.connect();
+    try {
+      const workspace = await evidence.query('SELECT id, "subscriptionStatus" FROM tenants WHERE name=$1 AND id=(SELECT "tenantId" FROM users WHERE email=$2)', [company, email]);
+      expect(workspace.rows).toHaveLength(1);
+      const tenantId = workspace.rows[0].id;
+      expect(workspace.rows[0].subscriptionStatus).toBe("free");
+      const members = await evidence.query('SELECT u.id,u.email,u."isActive",u."emailVerifiedAt",u."sessionVersion",r.name AS role FROM users u JOIN roles r ON r.id=u."roleId" WHERE u."tenantId"=$1', [tenantId]);
+      expect(members.rows).toHaveLength(2);
+      const owner = members.rows.find(member => member.email === email);
+      const joined = members.rows.find(member => member.email === teammate);
+      expect(owner).toMatchObject({ role: "SuperAdmin", isActive: true });
+      expect(joined).toMatchObject({ role: "Member", isActive: false, sessionVersion: 1 });
+      expect(owner.emailVerifiedAt).not.toBeNull();
+      expect(joined.emailVerifiedAt).not.toBeNull();
+      const transactions = await evidence.query('SELECT id,description,amount,status,"userId" FROM transactions WHERE "tenantId"=$1', [tenantId]);
+      expect(transactions.rows).toHaveLength(1);
+      const transaction = transactions.rows[0];
+      expect(transaction).toMatchObject({ description: "First workspace transaction", amount: "19.95", status: "completed", userId: owner.id });
+      expect(transactionPath).toBe(`/transactions/${transaction.id}`);
+      expect((await evidence.query('SELECT id FROM invitations WHERE "tenantId"=$1', [tenantId])).rows).toHaveLength(0);
+      const audits = (await evidence.query('SELECT action,"actorId","actorSource",metadata FROM audit_logs WHERE "tenantId"=$1', [tenantId])).rows;
+      for (const [action, actorId, details] of [
+        ["TRANSACTION_CREATED", owner.id, { targetId: transaction.id, amount: "19.95", status: "pending" }],
+        ["TRANSACTION_STATUS_CHANGED", owner.id, { targetId: transaction.id, previousStatus: "pending", status: "completed" }],
+        ["MEMBER_INVITED", owner.id, { role: "Member" }],
+        ["INVITATION_ACCEPTED", joined.id, { memberId: joined.id, role: "Member" }],
+        ["MEMBER_DEACTIVATED", owner.id, { targetId: joined.id, previousActive: true, active: false }],
+      ] as const) {
+        const matching = audits.filter(audit => audit.action === action);
+        expect(matching, action).toHaveLength(1);
+        expect(matching[0]).toMatchObject({ actorId, actorSource: "user", metadata: details });
+      }
+      expect(audits.find(audit => audit.action === "INVITATION_ACCEPTED").metadata.targetId)
+        .toBe(audits.find(audit => audit.action === "MEMBER_INVITED").metadata.targetId);
+    } finally { await evidence.end(); }
+
   } catch (error) {
     await page.screenshot({ path: test.info().outputPath("failure.png") });
     throw error;

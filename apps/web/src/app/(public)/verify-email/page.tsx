@@ -9,5 +9,6 @@ export default async function VerifyEmailPage({ searchParams }: { searchParams: 
     action={token ? verifyEmailAction : resendVerificationAction} token={token}
     fields={token ? [] : [{ name: "email", label: "Email", type: "email", autoComplete: "email" }]}
     button={token ? "Verify email" : "Send verification email"} finishOnSuccess={Boolean(token)}
+    errorLinks={token ? [{ href: "/verify-email", label: "Resend verification" }] : []}
   /></main>;
 }

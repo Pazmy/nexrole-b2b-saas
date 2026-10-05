@@ -29,7 +29,10 @@ async function emailRequest(form: FormData, purpose: "verify" | "reset"): Promis
     try { await requestAccountEmail(email, purpose); }
     catch { console.error("Account email request failed."); }
     // Identical response for absent, inactive, verified accounts and delivery errors.
-    return { success: true, message: "If this address is eligible, we will send an email. Check your inbox and spam folder. If nothing arrives, wait 15 minutes before trying again." };
+    const message = purpose === "reset"
+      ? "If this address is eligible, we will send a password reset email. Check your inbox and spam folder. Each reset link expires after 30 minutes. You can request up to 3 reset emails per address within 15 minutes."
+      : "If this address is eligible, we will send a verification email. Check your inbox and spam folder. Each verification link expires after 24 hours. You can request up to 3 verification emails per address within 15 minutes.";
+    return { success: true, message };
   } catch (error) { return failure(error); }
 }
 
