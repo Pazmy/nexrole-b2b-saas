@@ -26,7 +26,10 @@ export function AccountForm({ title, description, action, fields = [], token, bu
         {field.autoComplete === "new-password" && <p className="text-xs text-zinc-400">Use at least 12 characters (at most 72 bytes).</p>}
       </div>)}
       {state?.error && <p role="alert" className="text-sm text-red-400">{state.error}</p>}
-      <Button type="submit" disabled={pending} className="w-full">{pending ? "Please wait..." : button}</Button>
+      <Button type="submit" disabled={pending}
+        className="w-full bg-blue-600 text-white shadow-sm transition-[background-color,box-shadow] duration-200 hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/25 focus-visible:ring-blue-400 disabled:shadow-none motion-reduce:transition-none">
+        {pending ? "Please wait..." : button}
+      </Button>
     </form>}
     <nav className="flex flex-wrap gap-4 text-sm text-blue-400">
       <Link href="/login">Sign in</Link>

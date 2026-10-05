@@ -1,15 +1,30 @@
 "use client";
 
 import { useRef, useState, useSyncExternalStore } from "react";
-import { Shield } from "lucide-react";
+import { CircleCheck, CircleMinus, CircleHelp, Clock, CreditCard, PauseCircle, TriangleAlert } from "lucide-react";
 import { billingPresentation, type BillingView } from "@/lib/billing-presentation";
 import { reconcileBillingAction, requestBillingSession } from "../billing-action";
 
 const subscribe = () => () => {};
+const statusBadges = {
+  free: { icon: CreditCard, className: "border-blue-800/50 bg-blue-950/30 text-blue-400" },
+  active: { icon: CircleCheck, className: "border-emerald-800/50 bg-emerald-950/30 text-emerald-400" },
+  trialing: { icon: Clock, className: "border-blue-800/50 bg-blue-950/30 text-blue-400" },
+  canceled: { icon: CircleMinus, className: "border-zinc-700 bg-zinc-800/50 text-zinc-300" },
+  past_due: { icon: TriangleAlert, className: "border-amber-800/50 bg-amber-950/30 text-amber-400" },
+  unpaid: { icon: TriangleAlert, className: "border-red-800/50 bg-red-950/30 text-red-400" },
+  paused: { icon: PauseCircle, className: "border-amber-800/50 bg-amber-950/30 text-amber-400" },
+  incomplete: { icon: Clock, className: "border-amber-800/50 bg-amber-950/30 text-amber-400" },
+  incomplete_expired: { icon: CircleMinus, className: "border-amber-800/50 bg-amber-950/30 text-amber-400" },
+};
+const unknownBadge = { icon: CircleHelp, className: "border-amber-800/50 bg-amber-950/30 text-amber-400" };
 export default function BillingPanel({ view, canManage, returned, feedbackKey }: {
   view: BillingView; canManage: boolean; returned: boolean; feedbackKey: string;
 }) {
   const display = billingPresentation(view);
+  const badge = Object.hasOwn(statusBadges, view.status)
+    ? statusBadges[view.status as keyof typeof statusBadges] : unknownBadge;
+  const StatusIcon = badge.icon;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submitting = useRef(false);
@@ -44,8 +59,8 @@ export default function BillingPanel({ view, canManage, returned, feedbackKey }:
   const buttonClass = "h-9 px-4 rounded-md text-xs font-medium text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed";
   return <section className="space-y-2" aria-label="Workspace billing" aria-busy={pending}>
     <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">Subscription Status</p>
-    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-950/60 w-max font-mono text-xs ${display.restricted ? "text-amber-400" : "text-emerald-400"}`}>
-      <Shield className="h-3.5 w-3.5" />{display.label}
+    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border w-max text-xs font-medium ${badge.className}`}>
+      <StatusIcon className="h-3.5 w-3.5" aria-hidden="true" />{display.label}
     </div>
     <p className="text-xs text-zinc-400">{display.description}</p>
     <p className="text-xs text-zinc-400">{display.usage} {display.policy}</p>
