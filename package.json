@@ -13,6 +13,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "db:generate": "npm run generate -w packages/database",
     "db:push": "npm run push -w packages/database",
+    "db:showcase": "node scripts/seed-showcase.cjs",
     "test:e2e": "npm run test:e2e -w apps/web",
     "test:access": "node --test tests/access-control.test.cjs",
     "test:api:db": "node --test tests/api-key-db.test.cjs",

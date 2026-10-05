@@ -6,6 +6,40 @@ For MVP scope, implementation priorities, and release acceptance criteria, see [
 
 For onboarding, local email previews, existing-account verification, and the final Resend setup checklist, see [Account setup and verification](docs/ACCOUNT_SETUP.md).
 
+## Application preview
+
+A fictional showcase workspace demonstrates tenant-scoped reporting, transaction management and role-based administration. Browse the [full screenshot gallery](docs/SCREENSHOTS.md) for workspace registration and email verification, transaction details, membership, invitations, API keys, permissions and billing views.
+
+### Dashboard overview
+
+![Dashboard overview with revenue and transaction metrics](<docs/ss/Screenshot 2026-10-05 at 14-00-14 Create Next App.png>)
+
+### Transaction ledger
+
+![Transaction ledger with filters, status badges and pagination](<docs/ss/Screenshot 2026-10-05 at 14-03-10 Create Next App.png>)
+
+## Project flow
+
+Explore the [project flow diagrams](docs/PROJECT_FLOW.md) for onboarding, workspace permissions, transactions, billing and integrations. The diagrams render directly on GitHub and explain the implemented flows and current verification boundaries.
+
+To explore the application locally, follow the [demo data setup guide](docs/SHOWCASE_DATA.md). Run `npm run db:showcase` to create a separate workspace with sample transactions and team members.
+
+```mermaid
+flowchart LR
+    A[Register workspace] --> B[Verify email]
+    B --> C[Sign in]
+    C --> D[Workspace dashboard]
+    D --> E[Transactions]
+    D --> F[Members and invitations]
+    D --> G[Stripe billing]
+    D --> H[Developer API keys]
+    I[Tenant isolation and fresh authorization] -.-> D
+    E --> J[Required mutation audits]
+    F --> J
+    G --> J
+    H --> J
+```
+
 ---
 
 ## 🚀 Architecture Overview

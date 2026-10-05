@@ -391,7 +391,7 @@ Keep scope, dependencies, and acceptance criteria here. Use issues or PRs for in
 
 #### Step 8.6: Verify and document the release candidate
 
-**Current checkpoint:** 8.6.4 complete (2026-09-29) for local acceptance. Verification matrix: docs/RELEASE_ACCEPTANCE.md. Stop here; next continuation starts 8.6.5 only. Live email and deployed webhook operations remain external prerequisites. Preserve existing UI and completed 8.2-8.5 implementation; fix only acceptance gaps or demonstrated defects.
+**Current checkpoint:** 8.6.4 complete (2026-09-29) for local acceptance. Verification matrix: docs/RELEASE_ACCEPTANCE.md. Next continuation starts 8.6.5 only; Docker work is deferred while bandwidth is limited. Update 2026-10-05: the user confirmed real Resend verification/reset email delivery and Change password. Invitation delivery to another recipient and deployed email/webhook operations remain external prerequisites. Preserve existing UI and completed 8.2-8.5 implementation; fix only acceptance gaps or demonstrated defects.
 
 **Baseline:** 8.5 passed 180 Node checks, six browser journeys in development and production, and user-assisted real Stripe sandbox verification. Reuse this evidence when applicable; do not repeat remote billing mutations without a concrete verification need. The root build currently omits the API. Compose currently defaults demo seeding to true and has fixed container names/host ports, so release smoke tests require explicit seed disabling and isolated resources. Real Resend inbox delivery remains unverified.
 

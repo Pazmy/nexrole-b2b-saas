@@ -2,7 +2,7 @@
 
 ## Scope and baseline
 
-Checkpoint 8.6.1 completed on 2026-09-29 against candidate base `15a0b84` (`feat(billing): implement subscription lifecycle, recovery, and mandatory audit logging`). At inspection, the only working-tree change was the sequential 8.6 plan in BUILD_PLAN.md. That initial checkpoint added documentation only. Current progress: 8.6.4 is complete for local acceptance; 8.6.5 is next. Live inbox delivery and deployed webhook operations remain unverified. See the dated checkpoint log below.
+Checkpoint 8.6.1 completed on 2026-09-29 against candidate base `15a0b84` (`feat(billing): implement subscription lifecycle, recovery, and mandatory audit logging`). At inspection, the only working-tree change was the sequential 8.6 plan in BUILD_PLAN.md. That initial checkpoint added documentation only. Current progress: 8.6.4 is complete for local acceptance; 8.6.5 is next. Real verification/reset email delivery was subsequently confirmed by the user on 2026-10-05; invitation delivery to another recipient and deployed webhook operations remain unverified. See the dated checkpoint log below.
 
 Existing evidence, not newly rerun results:
 
@@ -100,3 +100,12 @@ Added one missing signed HTTP scenario: two different events for one tenant comp
 | External email | Resend is not configured. Previews, fixture transport and failure recovery pass; inbox delivery is unverified. Follow the final real-delivery checklist in [ACCOUNT_SETUP.md](ACCOUNT_SETUP.md) after configuration, including verification/reset and teammate invitations to authorized inboxes. |
 
 Public production readiness remains blocked on real email acceptance and deployment-specific configuration/operational verification. This local checkpoint can close because those prerequisites are explicit and no required local check failed. Production rejects ordinary preview mode; any fixture email transport used for isolated Docker smoke must be identified and cannot establish real delivery. No secret/env changes, real Stripe/Resend request, migration, Docker startup or interruption of user-owned servers/listener. Stop before 8.6.5.
+
+
+### Manual account verification update (2026-10-05)
+
+The user configured Resend for local testing and reported successful real verification-email delivery and account verification, password-reset email delivery and reset, and Change password. The user also confirmed rejection of expired/invalidated reset links on submission. This is user-reported manual evidence; no new provider request was made while recording it.
+
+The earlier 2026-09-29 statements about missing Resend configuration describe the environment at those checkpoints. Current verification/reset delivery is confirmed for the authorized Resend test recipient. Invitation delivery to another recipient/domain, deployed email configuration and deployed webhook recovery remain unverified. Checkpoints 8.6.5-8.6.7 remain pending; this update does not close release acceptance.
+
+Public project documentation now includes implementation flow diagrams, 18 reviewed UI captures and a local demo-data guide. The explicit db:showcase seed was run successfully and its initial counts/revenue checked; repeating it preserved the existing fixture instead of duplicating or resetting it. These fixtures and screenshots demonstrate the UI and do not substitute for deployment or external-service acceptance.
