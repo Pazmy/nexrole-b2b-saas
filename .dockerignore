@@ -1,0 +1,10 @@
+**/node_modules
+**/.next
+**/.next-*
+**/.email-previews
+**/.env
+**/.env.local
+**/.env.*.local
+.git
+**/test-results
+**/playwright-report

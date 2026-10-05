@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function MembersPage() {
-  return <h1>Members</h1>;
+  redirect("/settings?tab=team");
 }

@@ -1,63 +1,28 @@
 "use server";
 
-import { auth } from "@/auth";
-import { prisma } from "@nexrole/database";
+import { AccessDeniedError, requirePermission } from "@/lib/authorization";
+import { withAuthorizedActor, writeRequiredAudit } from "@/lib/audit";
 import { revalidatePath } from "next/cache";
-import { writeAuditLog } from "@/lib/audit";
 
-export interface ProfileFormState {
-  error?: string | null;
-  success?: string | null;
-}
+export interface ProfileFormState { error?: string | null; success?: string | null; }
 
-export async function updateTenantProfile(
-  prevState: ProfileFormState | null,
-  formData: FormData,
-) {
-  const session = await auth();
-
-  const tenantId = session?.user?.tenantId;
-  const userRole = session?.user?.role;
-
-  if (!tenantId || !userRole || userRole !== "SuperAdmin") {
-    return {
-      error:
-        "Unauthorized. Only SuperAdmins can modify organization parameters.",
-    };
-  }
-
-  const name = (formData.get("name") || formData.get("companyName")) as string;
-
-  if (!name || name.trim().length < 2) {
-    return { error: "Organization name must be at least 2 characters long." };
-  }
-
+export async function updateTenantProfile(_prevState: ProfileFormState | null, formData: FormData) {
   try {
-    const oldTenant = await prisma.tenant.findUnique({
-      where: { id: tenantId },
-      select: { name: true },
+    const actor = await requirePermission("workspace:update");
+    const name = formData.get("name") || formData.get("companyName");
+    if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 256) return { error: "Organization name must be between 2 and 256 characters long." };
+    await withAuthorizedActor(actor, "workspace:update", async (tx) => {
+      const previous = await tx.tenant.findUniqueOrThrow({ where: { id: actor.tenantId }, select: { name: true } });
+      if (previous.name === name.trim()) return;
+      await tx.tenant.update({ where: { id: actor.tenantId }, data: { name: name.trim() } });
+      await writeRequiredAudit(tx, { tenantId: actor.tenantId, actor: { kind: "user", id: actor.id, tenantId: actor.tenantId },
+        action: "TENANT_PROFILE_UPDATED", details: { previousName: previous.name.slice(0, 256) || "(unnamed)", name: name.trim() } });
     });
-
-    await prisma.tenant.update({
-      where: { id: tenantId },
-      data: { name: name.trim() },
-    });
-
-    await writeAuditLog("TENANT_PROFILE_UPDATED", {
-      before: oldTenant?.name || "",
-      after: name.trim(),
-    });
-
-    revalidatePath("/settings");
-    return {
-      success: "Organization profile updated successfully!",
-      error: null,
-    };
+    try { revalidatePath("/settings"); } catch { console.error("Profile updated, but cache refresh failed."); }
+    return { success: "Organization profile updated successfully!", error: null };
   } catch (error) {
-    console.error("Settings Mutation Failure:", error);
-    return {
-      error: "An unexpected internal database error occurred.",
-      success: null,
-    };
+    if (error instanceof AccessDeniedError) return { error: error.message };
+    console.error("Organization profile update could not be confirmed.");
+    return { error: "An unexpected internal database error occurred.", success: null };
   }
 }

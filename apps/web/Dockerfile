@@ -18,7 +18,7 @@ COPY packages/database/ ./packages/database/
 ENV SKIP_ENV_VALIDATION=true
 
 # Generate Prisma client and build the Next.js application
-RUN npm run db:generate
+RUN npm run build -w packages/database
 RUN npm run build -w apps/web
 
 EXPOSE 3000

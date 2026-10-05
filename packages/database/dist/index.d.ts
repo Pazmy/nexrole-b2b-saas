@@ -1,3 +1,11 @@
 import "dotenv/config";
 import { PrismaClient } from "./generated/prisma/client.js";
+export { writeRequiredAudit, AuditPersistenceError } from "./audit.js";
+export type { AuditActor, AuditDetails, RequiredAuditInput } from "./audit.js";
+export { BillingService, BillingError } from "./billing-service.js";
+export { BillingReconciler, ReconciliationError } from "./billing-reconciliation.js";
+export type { BillingEvent, ReconciliationProvider, ReconciliationResult } from "./billing-reconciliation.js";
+export { stripeReconciliationProvider } from "./stripe-reconciliation-provider.js";
+export type { BillingActor, BillingProvider, BillingConfig, BillingCustomer, BillingCheckout, BillingSubscription } from "./billing-service.js";
+export { getCheckoutDecision, getInvoiceSubscriptionId, matchesBillingOwnership, BILLING_SUBSCRIPTION_STATUSES } from "./billing-rules.js";
 export declare const prisma: PrismaClient;

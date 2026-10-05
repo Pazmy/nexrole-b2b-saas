@@ -1,173 +1,47 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import Stripe from "stripe";
-import { prisma } from "@nexrole/database";
+import { BillingReconciler, ReconciliationError, stripeReconciliationProvider, prisma, type BillingEvent } from "@nexrole/database";
 import { rawBodyParser } from "../middleware/rawBody.js";
-import { SUBSCRIPTION_STATUS } from "../constants.js";
 import { getContextLogger } from "../middleware/loggerMiddleware.js";
 import { env } from "../lib/env.js";
 
-const router = Router();
-
-interface StripeInvoiceWithSubscriptionDetails extends Stripe.Invoice {
-  subscription_details?: {
-    metadata?: {
-      tenantId?: string;
-    };
-  };
+// Factory exposes only transport/provider boundaries to signed HTTP tests.
+export function createWebhookRouter(verify: (body: Buffer, signature: string) => BillingEvent,
+  handle: (event: BillingEvent) => Promise<{ disposition: string; reason: string }>) {
+  const router = Router();
+  router.post("/stripe", rawBodyParser, async (req, res) => {
+    let event: BillingEvent;
+    try {
+      const signature = req.headers["stripe-signature"];
+      if (typeof signature !== "string" || !Buffer.isBuffer(req.body)) throw new Error("Invalid signature");
+      event = verify(req.body, signature);
+    } catch {
+      getContextLogger().warn("Stripe signature verification failed.");
+      res.status(400).json({ error: "Invalid webhook signature." }); return;
+    }
+    try {
+      const result = await handle(event);
+      getContextLogger().info({ eventId: event.id, disposition: result.disposition, reason: result.reason }, "Stripe event handled.");
+      res.status(200).json({ received: true, ...result });
+    } catch (error) {
+      const reason = error instanceof ReconciliationError ? error.reason : "processing_unavailable";
+      getContextLogger().warn({ eventId: event.id, reason }, "Stripe event remains retryable.");
+      res.status(503).json({ error: "Billing synchronization is pending. Retry delivery." });
+    }
+  });
+  return router;
 }
 
-let stripeInstance: Stripe | null = null;
-function getStripe() {
-  if (!stripeInstance) {
-    stripeInstance = new Stripe(env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-06-24.dahlia",
-    });
-  }
-  return stripeInstance;
+let stripeInstance: Stripe | undefined;
+function stripe() {
+  return stripeInstance ??= new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: "2026-06-24.dahlia", timeout: 10000, maxNetworkRetries: 1 });
 }
-
-router.post("/stripe", rawBodyParser, async (req: Request, res: Response) => {
-  const sig = req.headers["stripe-signature"];
-  const endpointSecret = env.STRIPE_WEBHOOK_SECRET;
-
-  let event: Stripe.Event;
-
-  try {
-    getContextLogger().info("Webhook received. stripe-signature header verification initiated.");
-    if (!sig || !endpointSecret) {
-      throw new Error(
-        `Missing stripe-signature header or webhook endpoint verification token. (sig: ${!!sig}, secret: ${!!endpointSecret})`,
-      );
-    }
-    // Cryptographically verify that the event payload came genuinely from Stripe
-    const stripe = getStripe();
-    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : String(err);
-    getContextLogger().error(
-      { err },
-      `⚠️ Webhook signature authorization check failed: ${errorMessage}`
-    );
-    res.status(400).send(`Webhook Error: ${errorMessage}`);
-    return;
-  }
-
-  // Handle distinct transactional payment events
-  try {
-    // 1. Check for duplicate webhook events (Idempotency check)
-    const existingEvent = await prisma.processedStripeEvent.findUnique({
-      where: { id: event.id },
-    });
-
-    if (existingEvent) {
-      getContextLogger().info({ eventId: event.id }, "Stripe webhook event already processed (idempotent skip)");
-      res.status(200).json({ received: true, ignored: true, reason: "duplicate" });
-      return;
-    }
-
-    switch (event.type) {
-      case "customer.subscription.created":
-      case "customer.subscription.updated": {
-        const subscription = event.data.object as Stripe.Subscription;
-        // Retrieve custom metadata passed during checkout to trace the tenant mapping context
-        const tenantId = subscription.metadata.tenantId;
-        const status = subscription.status; // e.g., 'active', 'past_due', 'canceled', 'unpaid'
-        const stripeCustomerId = subscription.customer as string;
-
-        if (tenantId) {
-          await prisma.$transaction([
-            prisma.tenant.update({
-              where: { id: tenantId },
-              data: { 
-                subscriptionStatus: status,
-                stripeCustomerId: stripeCustomerId,
-              },
-            }),
-            prisma.auditLog.create({
-              data: {
-                action: "TENANT_SUBSCRIPTION_UPDATED",
-                tenantId: tenantId,
-                metadata: {
-                  event: event.type,
-                  subscriptionStatus: status,
-                  stripeCustomerId: stripeCustomerId,
-                },
-              },
-            }),
-            prisma.processedStripeEvent.create({
-              data: { id: event.id },
-            }),
-          ]);
-
-          getContextLogger().info(
-            `💳 Tenant [${tenantId}] billing subscription state updated to: ${status.toUpperCase()} (Customer: ${stripeCustomerId})`
-          );
-        } else {
-          // If no tenant context is mapped, still flag as processed
-          await prisma.processedStripeEvent.create({
-            data: { id: event.id },
-          });
-        }
-        break;
-      }
-
-      case "invoice.payment_failed": {
-        const invoice = event.data.object as Stripe.Invoice;
-        const tenantId = (invoice as StripeInvoiceWithSubscriptionDetails).subscription_details?.metadata
-          ?.tenantId;
-
-        if (tenantId) {
-          // Instantly lock account mutations by flag switching to 'past_due'
-          await prisma.$transaction([
-            prisma.tenant.update({
-              where: { id: tenantId },
-              data: { subscriptionStatus: SUBSCRIPTION_STATUS.PAST_DUE },
-            }),
-            prisma.auditLog.create({
-              data: {
-                action: "TENANT_SUBSCRIPTION_PAYMENT_FAILED",
-                tenantId: tenantId,
-                metadata: {
-                  event: event.type,
-                  subscriptionStatus: SUBSCRIPTION_STATUS.PAST_DUE,
-                  invoiceId: invoice.id,
-                },
-              },
-            }),
-            prisma.processedStripeEvent.create({
-              data: { id: event.id },
-            }),
-          ]);
-
-          getContextLogger().warn(
-            `🚨 Payment collection failed for Tenant [${tenantId}]. Flagged as PAST_DUE.`
-          );
-        } else {
-          await prisma.processedStripeEvent.create({
-            data: { id: event.id },
-          });
-        }
-        break;
-      }
-
-      default:
-        // Flag as processed for unhandled event types as well
-        await prisma.processedStripeEvent.create({
-          data: { id: event.id },
-        });
-        getContextLogger().info(`ℹ️ Unhandled Stripe hook event type: ${event.type}`);
-    }
-
-    res.status(200).json({ received: true });
-  } catch (dbError) {
-    getContextLogger().error(
-      { err: dbError },
-      "Database sync execution fault during stripe processing"
-    );
-    res
-      .status(500)
-      .json({ error: "Webhook event processing crashed internally." });
-  }
-});
-
-export const webhookRouter = router;
+export const webhookRouter = createWebhookRouter(
+  (body, signature) => stripe().webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET),
+  (event) => {
+    if (!/^(sk|rk)_(test|live)_/.test(env.STRIPE_SECRET_KEY)) throw new Error("Billing configuration unavailable");
+    return new BillingReconciler(prisma, stripeReconciliationProvider(stripe()), {
+      priceId: env.STRIPE_PRO_PRICE_ID ?? "", livemode: /^(sk|rk)_live_/.test(env.STRIPE_SECRET_KEY),
+    }).handle(event);
+  },
+);

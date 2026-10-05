@@ -66,6 +66,7 @@ async function main() {
     create: {
       email: "admin@sensei.com",
       passwordHash: hashedPassword,
+      emailVerifiedAt: new Date(), // Explicitly trusted local demo accounts only.
       tenantId: tenant1.id,
       roleId: adminRole.id,
     },
@@ -81,6 +82,7 @@ async function main() {
     create: {
       email: "admin@glowstone.io",
       passwordHash: hashedPassword,
+      emailVerifiedAt: new Date(), // Explicitly trusted local demo accounts only.
       tenantId: tenant2.id,
       roleId: adminRole.id,
     },

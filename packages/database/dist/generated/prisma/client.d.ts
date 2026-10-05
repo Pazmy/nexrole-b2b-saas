@@ -61,3 +61,18 @@ export type AuditLog = Prisma.AuditLogModel;
  *
  */
 export type ProcessedStripeEvent = Prisma.ProcessedStripeEventModel;
+/**
+ * Model ExternalOperation
+ *
+ */
+export type ExternalOperation = Prisma.ExternalOperationModel;
+/**
+ * Model AccountToken
+ *
+ */
+export type AccountToken = Prisma.AccountTokenModel;
+/**
+ * Model AuthRateLimit
+ *
+ */
+export type AuthRateLimit = Prisma.AuthRateLimitModel;

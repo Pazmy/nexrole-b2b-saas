@@ -1,83 +1,32 @@
 "use server";
 
-import { auth } from "@/auth";
-import { prisma } from "@nexrole/database";
-import crypto from "crypto";
+import { requirePermission } from "@/lib/authorization";
+import { withAuthorizedActor, writeRequiredAudit } from "@/lib/audit";
+import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { writeAuditLog } from "@/lib/audit";
 
-// 1. Generate a brand new token profile securely
 export async function generateApiKey(name: string) {
-  const session = await auth();
-  const tenantId = session?.user?.tenantId;
-  const userRole = session?.user?.role;
-
-  if (!tenantId || userRole !== "SuperAdmin") {
-    throw new Error("Unauthorized access. SuperAdmin privileges required.");
-  }
-
-  if (!name || name.trim().length < 2) {
-    throw new Error("API Key label must be at least 2 characters long.");
-  }
-
-  // Generate a distinct, cryptographically secure key string
-  const rawTokenBytes = crypto.randomBytes(24).toString("hex");
-  const publicRawApiKey = `nr_live_${rawTokenBytes}`;
-
-  // Execute a SHA-256 hash to generate the matching unique signature for DB storage
-  const secureDbHash = crypto
-    .createHash("sha256")
-    .update(publicRawApiKey)
-    .digest("hex");
-
-  const newKey = await prisma.apiKey.create({
-    data: {
-      name: name.trim(),
-      key: secureDbHash,
-      tenantId: tenantId,
-    },
+  const actor = await requirePermission("keys:manage");
+  if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 256) throw new Error("API Key label must be between 2 and 256 characters long.");
+  const raw = `nr_live_${crypto.randomBytes(24).toString("hex")}`;
+  const key = crypto.createHash("sha256").update(raw).digest("hex");
+  await withAuthorizedActor(actor, "keys:manage", async (tx) => {
+    const created = await tx.apiKey.create({ data: { name: name.trim(), key, tenantId: actor.tenantId } });
+    await writeRequiredAudit(tx, { tenantId: actor.tenantId, actor: { kind: "user", id: actor.id, tenantId: actor.tenantId },
+      action: "DEVELOPER_API_KEY_GENERATED", details: { targetId: created.id, name: created.name } });
   });
-
-  await writeAuditLog("DEVELOPER_API_KEY_GENERATED", {
-    keyId: newKey.id,
-    keyName: name.trim(),
-  });
-
-  revalidatePath("/settings");
-
-  // Return the raw readable key token string exactly once to the client view layout
-  return publicRawApiKey;
+  try { revalidatePath("/settings"); } catch { console.error("API key created, but cache refresh failed."); }
+  return raw;
 }
 
-// 2. Revoke an existing API key
 export async function revokeApiKey(keyId: string) {
-  const session = await auth();
-  const tenantId = session?.user?.tenantId;
-  const userRole = session?.user?.role;
-
-  if (!tenantId || userRole !== "SuperAdmin") {
-    throw new Error("Unauthorized access.");
-  }
-
-  const keyRecord = await prisma.apiKey.findFirst({
-    where: {
-      id: keyId,
-      tenantId: tenantId,
-    },
+  const actor = await requirePermission("keys:manage");
+  await withAuthorizedActor(actor, "keys:manage", async (tx) => {
+    const key = await tx.apiKey.findFirst({ where: { id: keyId, tenantId: actor.tenantId } });
+    if (!key) return;
+    await tx.apiKey.delete({ where: { id: key.id, tenantId: actor.tenantId } });
+    await writeRequiredAudit(tx, { tenantId: actor.tenantId, actor: { kind: "user", id: actor.id, tenantId: actor.tenantId },
+      action: "DEVELOPER_API_KEY_REVOKED", details: { targetId: key.id, name: key.name.slice(0, 256) || "(unnamed)" } });
   });
-
-  if (keyRecord) {
-    await prisma.apiKey.delete({
-      where: {
-        id: keyId,
-      },
-    });
-
-    await writeAuditLog("DEVELOPER_API_KEY_REVOKED", {
-      keyId: keyId,
-      keyName: keyRecord.name,
-    });
-  }
-
-  revalidatePath("/settings");
+  try { revalidatePath("/settings"); } catch { console.error("API key revoked, but cache refresh failed."); }
 }

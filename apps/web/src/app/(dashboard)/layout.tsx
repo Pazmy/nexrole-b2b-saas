@@ -1,4 +1,6 @@
-import { auth, signOut } from "@/auth";
+import { signOut } from "@/auth";
+import { AccessDeniedError, requirePermission } from "@/lib/authorization";
+import { hasPermission } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import {
   LayoutDashboard,
@@ -17,16 +19,18 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-
-  if (!session?.user?.tenantId) {
-    redirect("/login");
+  let user;
+  try {
+    user = await requirePermission("workspace:read");
+  } catch (error) {
+    if (error instanceof AccessDeniedError) redirect("/login");
+    throw error;
   }
 
-  const tenantName = session.user.name || "My Company";
-  const userEmail = session.user.email;
-  const userRole = session.user.role || "Member";
-  const billingCheck = await checkTenantBillingStatus(session.user.tenantId);
+  const tenantName = user.name;
+  const userEmail = user.email;
+  const userRole = user.role;
+  const billingCheck = await checkTenantBillingStatus(user.tenantId);
 
   return (
     <div className="flex h-screen w-screen bg-zinc-950 text-white overflow-hidden">
@@ -108,9 +112,11 @@ export default async function DashboardLayout({
           {billingCheck.isLocked && billingCheck.reason !== "none" && (
             <BillingAlertBanner
               reason={billingCheck.reason}
+              subscriptionStatus={billingCheck.subscriptionStatus}
               tier={billingCheck.tier}
               usage={billingCheck.currentUsage}
               max={billingCheck.maxUsage}
+              canManageBilling={hasPermission(userRole, "billing:manage")}
             />
           )}
           {children}

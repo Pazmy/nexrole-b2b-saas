@@ -7,14 +7,29 @@ import type * as Prisma from "../internal/prismaNamespace.js";
 export type TenantModel = runtime.Types.Result.DefaultSelection<Prisma.$TenantPayload>;
 export type AggregateTenant = {
     _count: TenantCountAggregateOutputType | null;
+    _avg: TenantAvgAggregateOutputType | null;
+    _sum: TenantSumAggregateOutputType | null;
     _min: TenantMinAggregateOutputType | null;
     _max: TenantMaxAggregateOutputType | null;
+};
+export type TenantAvgAggregateOutputType = {
+    billingVersion: number | null;
+};
+export type TenantSumAggregateOutputType = {
+    billingVersion: bigint | null;
 };
 export type TenantMinAggregateOutputType = {
     id: string | null;
     name: string | null;
     subscriptionStatus: string | null;
     stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    subscriptionCancelAtPeriodEnd: boolean | null;
+    subscriptionCancelAt: Date | null;
+    billingSyncStatus: string | null;
+    billingLeaseOwner: string | null;
+    billingLeaseExpiresAt: Date | null;
+    billingVersion: bigint | null;
     createdAt: Date | null;
     updatedAt: Date | null;
 };
@@ -23,6 +38,13 @@ export type TenantMaxAggregateOutputType = {
     name: string | null;
     subscriptionStatus: string | null;
     stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    subscriptionCancelAtPeriodEnd: boolean | null;
+    subscriptionCancelAt: Date | null;
+    billingSyncStatus: string | null;
+    billingLeaseOwner: string | null;
+    billingLeaseExpiresAt: Date | null;
+    billingVersion: bigint | null;
     createdAt: Date | null;
     updatedAt: Date | null;
 };
@@ -31,15 +53,35 @@ export type TenantCountAggregateOutputType = {
     name: number;
     subscriptionStatus: number;
     stripeCustomerId: number;
+    stripeSubscriptionId: number;
+    subscriptionCancelAtPeriodEnd: number;
+    subscriptionCancelAt: number;
+    billingSyncStatus: number;
+    billingLeaseOwner: number;
+    billingLeaseExpiresAt: number;
+    billingVersion: number;
     createdAt: number;
     updatedAt: number;
     _all: number;
+};
+export type TenantAvgAggregateInputType = {
+    billingVersion?: true;
+};
+export type TenantSumAggregateInputType = {
+    billingVersion?: true;
 };
 export type TenantMinAggregateInputType = {
     id?: true;
     name?: true;
     subscriptionStatus?: true;
     stripeCustomerId?: true;
+    stripeSubscriptionId?: true;
+    subscriptionCancelAtPeriodEnd?: true;
+    subscriptionCancelAt?: true;
+    billingSyncStatus?: true;
+    billingLeaseOwner?: true;
+    billingLeaseExpiresAt?: true;
+    billingVersion?: true;
     createdAt?: true;
     updatedAt?: true;
 };
@@ -48,6 +90,13 @@ export type TenantMaxAggregateInputType = {
     name?: true;
     subscriptionStatus?: true;
     stripeCustomerId?: true;
+    stripeSubscriptionId?: true;
+    subscriptionCancelAtPeriodEnd?: true;
+    subscriptionCancelAt?: true;
+    billingSyncStatus?: true;
+    billingLeaseOwner?: true;
+    billingLeaseExpiresAt?: true;
+    billingVersion?: true;
     createdAt?: true;
     updatedAt?: true;
 };
@@ -56,6 +105,13 @@ export type TenantCountAggregateInputType = {
     name?: true;
     subscriptionStatus?: true;
     stripeCustomerId?: true;
+    stripeSubscriptionId?: true;
+    subscriptionCancelAtPeriodEnd?: true;
+    subscriptionCancelAt?: true;
+    billingSyncStatus?: true;
+    billingLeaseOwner?: true;
+    billingLeaseExpiresAt?: true;
+    billingVersion?: true;
     createdAt?: true;
     updatedAt?: true;
     _all?: true;
@@ -98,6 +154,18 @@ export type TenantAggregateArgs<ExtArgs extends runtime.Types.Extensions.Interna
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      *
+     * Select which fields to average
+    **/
+    _avg?: TenantAvgAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
+     * Select which fields to sum
+    **/
+    _sum?: TenantSumAggregateInputType;
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     *
      * Select which fields to find the minimum value
     **/
     _min?: TenantMinAggregateInputType;
@@ -119,6 +187,8 @@ export type TenantGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalA
     take?: number;
     skip?: number;
     _count?: TenantCountAggregateInputType | true;
+    _avg?: TenantAvgAggregateInputType;
+    _sum?: TenantSumAggregateInputType;
     _min?: TenantMinAggregateInputType;
     _max?: TenantMaxAggregateInputType;
 };
@@ -127,9 +197,18 @@ export type TenantGroupByOutputType = {
     name: string;
     subscriptionStatus: string;
     stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
+    subscriptionCancelAtPeriodEnd: boolean;
+    subscriptionCancelAt: Date | null;
+    billingSyncStatus: string;
+    billingLeaseOwner: string | null;
+    billingLeaseExpiresAt: Date | null;
+    billingVersion: bigint;
     createdAt: Date;
     updatedAt: Date;
     _count: TenantCountAggregateOutputType | null;
+    _avg: TenantAvgAggregateOutputType | null;
+    _sum: TenantSumAggregateOutputType | null;
     _min: TenantMinAggregateOutputType | null;
     _max: TenantMaxAggregateOutputType | null;
 };
@@ -144,50 +223,83 @@ export type TenantWhereInput = {
     name?: Prisma.StringFilter<"Tenant"> | string;
     subscriptionStatus?: Prisma.StringFilter<"Tenant"> | string;
     stripeCustomerId?: Prisma.StringNullableFilter<"Tenant"> | string | null;
+    stripeSubscriptionId?: Prisma.StringNullableFilter<"Tenant"> | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFilter<"Tenant"> | boolean;
+    subscriptionCancelAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null;
+    billingSyncStatus?: Prisma.StringFilter<"Tenant"> | string;
+    billingLeaseOwner?: Prisma.UuidNullableFilter<"Tenant"> | string | null;
+    billingLeaseExpiresAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null;
+    billingVersion?: Prisma.BigIntFilter<"Tenant"> | bigint | number;
     createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string;
     users?: Prisma.UserListRelationFilter;
     transactions?: Prisma.TransactionListRelationFilter;
     apiKeys?: Prisma.ApiKeyListRelationFilter;
     auditLogs?: Prisma.AuditLogListRelationFilter;
+    externalOperations?: Prisma.ExternalOperationListRelationFilter;
 };
 export type TenantOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
     name?: Prisma.SortOrder;
     subscriptionStatus?: Prisma.SortOrder;
     stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    stripeSubscriptionId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    subscriptionCancelAtPeriodEnd?: Prisma.SortOrder;
+    subscriptionCancelAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+    billingSyncStatus?: Prisma.SortOrder;
+    billingLeaseOwner?: Prisma.SortOrderInput | Prisma.SortOrder;
+    billingLeaseExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+    billingVersion?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
     users?: Prisma.UserOrderByRelationAggregateInput;
     transactions?: Prisma.TransactionOrderByRelationAggregateInput;
     apiKeys?: Prisma.ApiKeyOrderByRelationAggregateInput;
     auditLogs?: Prisma.AuditLogOrderByRelationAggregateInput;
+    externalOperations?: Prisma.ExternalOperationOrderByRelationAggregateInput;
 };
 export type TenantWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
     stripeCustomerId?: string;
+    stripeSubscriptionId?: string;
     AND?: Prisma.TenantWhereInput | Prisma.TenantWhereInput[];
     OR?: Prisma.TenantWhereInput[];
     NOT?: Prisma.TenantWhereInput | Prisma.TenantWhereInput[];
     name?: Prisma.StringFilter<"Tenant"> | string;
     subscriptionStatus?: Prisma.StringFilter<"Tenant"> | string;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFilter<"Tenant"> | boolean;
+    subscriptionCancelAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null;
+    billingSyncStatus?: Prisma.StringFilter<"Tenant"> | string;
+    billingLeaseOwner?: Prisma.UuidNullableFilter<"Tenant"> | string | null;
+    billingLeaseExpiresAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null;
+    billingVersion?: Prisma.BigIntFilter<"Tenant"> | bigint | number;
     createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string;
     users?: Prisma.UserListRelationFilter;
     transactions?: Prisma.TransactionListRelationFilter;
     apiKeys?: Prisma.ApiKeyListRelationFilter;
     auditLogs?: Prisma.AuditLogListRelationFilter;
-}, "id" | "stripeCustomerId">;
+    externalOperations?: Prisma.ExternalOperationListRelationFilter;
+}, "id" | "stripeCustomerId" | "stripeSubscriptionId">;
 export type TenantOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
     name?: Prisma.SortOrder;
     subscriptionStatus?: Prisma.SortOrder;
     stripeCustomerId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    stripeSubscriptionId?: Prisma.SortOrderInput | Prisma.SortOrder;
+    subscriptionCancelAtPeriodEnd?: Prisma.SortOrder;
+    subscriptionCancelAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+    billingSyncStatus?: Prisma.SortOrder;
+    billingLeaseOwner?: Prisma.SortOrderInput | Prisma.SortOrder;
+    billingLeaseExpiresAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+    billingVersion?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
     _count?: Prisma.TenantCountOrderByAggregateInput;
+    _avg?: Prisma.TenantAvgOrderByAggregateInput;
     _max?: Prisma.TenantMaxOrderByAggregateInput;
     _min?: Prisma.TenantMinOrderByAggregateInput;
+    _sum?: Prisma.TenantSumOrderByAggregateInput;
 };
 export type TenantScalarWhereWithAggregatesInput = {
     AND?: Prisma.TenantScalarWhereWithAggregatesInput | Prisma.TenantScalarWhereWithAggregatesInput[];
@@ -197,6 +309,13 @@ export type TenantScalarWhereWithAggregatesInput = {
     name?: Prisma.StringWithAggregatesFilter<"Tenant"> | string;
     subscriptionStatus?: Prisma.StringWithAggregatesFilter<"Tenant"> | string;
     stripeCustomerId?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null;
+    stripeSubscriptionId?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolWithAggregatesFilter<"Tenant"> | boolean;
+    subscriptionCancelAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null;
+    billingSyncStatus?: Prisma.StringWithAggregatesFilter<"Tenant"> | string;
+    billingLeaseOwner?: Prisma.UuidNullableWithAggregatesFilter<"Tenant"> | string | null;
+    billingLeaseExpiresAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null;
+    billingVersion?: Prisma.BigIntWithAggregatesFilter<"Tenant"> | bigint | number;
     createdAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string;
     updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string;
 };
@@ -205,54 +324,93 @@ export type TenantCreateInput = {
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     users?: Prisma.UserCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutTenantInput;
     auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationCreateNestedManyWithoutTenantInput;
 };
 export type TenantUncheckedCreateInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutTenantInput;
     auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedCreateNestedManyWithoutTenantInput;
 };
 export type TenantUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUpdateManyWithoutTenantNestedInput;
     auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUpdateManyWithoutTenantNestedInput;
 };
 export type TenantUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutTenantNestedInput;
     auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedUpdateManyWithoutTenantNestedInput;
 };
 export type TenantCreateManyInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
 };
@@ -261,6 +419,13 @@ export type TenantUpdateManyMutationInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -269,6 +434,13 @@ export type TenantUncheckedUpdateManyInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -277,14 +449,31 @@ export type TenantCountOrderByAggregateInput = {
     name?: Prisma.SortOrder;
     subscriptionStatus?: Prisma.SortOrder;
     stripeCustomerId?: Prisma.SortOrder;
+    stripeSubscriptionId?: Prisma.SortOrder;
+    subscriptionCancelAtPeriodEnd?: Prisma.SortOrder;
+    subscriptionCancelAt?: Prisma.SortOrder;
+    billingSyncStatus?: Prisma.SortOrder;
+    billingLeaseOwner?: Prisma.SortOrder;
+    billingLeaseExpiresAt?: Prisma.SortOrder;
+    billingVersion?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+};
+export type TenantAvgOrderByAggregateInput = {
+    billingVersion?: Prisma.SortOrder;
 };
 export type TenantMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     name?: Prisma.SortOrder;
     subscriptionStatus?: Prisma.SortOrder;
     stripeCustomerId?: Prisma.SortOrder;
+    stripeSubscriptionId?: Prisma.SortOrder;
+    subscriptionCancelAtPeriodEnd?: Prisma.SortOrder;
+    subscriptionCancelAt?: Prisma.SortOrder;
+    billingSyncStatus?: Prisma.SortOrder;
+    billingLeaseOwner?: Prisma.SortOrder;
+    billingLeaseExpiresAt?: Prisma.SortOrder;
+    billingVersion?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
 };
@@ -293,8 +482,18 @@ export type TenantMinOrderByAggregateInput = {
     name?: Prisma.SortOrder;
     subscriptionStatus?: Prisma.SortOrder;
     stripeCustomerId?: Prisma.SortOrder;
+    stripeSubscriptionId?: Prisma.SortOrder;
+    subscriptionCancelAtPeriodEnd?: Prisma.SortOrder;
+    subscriptionCancelAt?: Prisma.SortOrder;
+    billingSyncStatus?: Prisma.SortOrder;
+    billingLeaseOwner?: Prisma.SortOrder;
+    billingLeaseExpiresAt?: Prisma.SortOrder;
+    billingVersion?: Prisma.SortOrder;
     createdAt?: Prisma.SortOrder;
     updatedAt?: Prisma.SortOrder;
+};
+export type TenantSumOrderByAggregateInput = {
+    billingVersion?: Prisma.SortOrder;
 };
 export type TenantScalarRelationFilter = {
     is?: Prisma.TenantWhereInput;
@@ -305,6 +504,19 @@ export type StringFieldUpdateOperationsInput = {
 };
 export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null;
+};
+export type BoolFieldUpdateOperationsInput = {
+    set?: boolean;
+};
+export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null;
+};
+export type BigIntFieldUpdateOperationsInput = {
+    set?: bigint | number;
+    increment?: bigint | number;
+    decrement?: bigint | number;
+    multiply?: bigint | number;
+    divide?: bigint | number;
 };
 export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string;
@@ -357,27 +569,55 @@ export type TenantUpdateOneRequiredWithoutAuditLogsNestedInput = {
     connect?: Prisma.TenantWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutAuditLogsInput, Prisma.TenantUpdateWithoutAuditLogsInput>, Prisma.TenantUncheckedUpdateWithoutAuditLogsInput>;
 };
+export type TenantCreateNestedOneWithoutExternalOperationsInput = {
+    create?: Prisma.XOR<Prisma.TenantCreateWithoutExternalOperationsInput, Prisma.TenantUncheckedCreateWithoutExternalOperationsInput>;
+    connectOrCreate?: Prisma.TenantCreateOrConnectWithoutExternalOperationsInput;
+    connect?: Prisma.TenantWhereUniqueInput;
+};
+export type TenantUpdateOneRequiredWithoutExternalOperationsNestedInput = {
+    create?: Prisma.XOR<Prisma.TenantCreateWithoutExternalOperationsInput, Prisma.TenantUncheckedCreateWithoutExternalOperationsInput>;
+    connectOrCreate?: Prisma.TenantCreateOrConnectWithoutExternalOperationsInput;
+    upsert?: Prisma.TenantUpsertWithoutExternalOperationsInput;
+    connect?: Prisma.TenantWhereUniqueInput;
+    update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutExternalOperationsInput, Prisma.TenantUpdateWithoutExternalOperationsInput>, Prisma.TenantUncheckedUpdateWithoutExternalOperationsInput>;
+};
 export type TenantCreateWithoutUsersInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     transactions?: Prisma.TransactionCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutTenantInput;
     auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationCreateNestedManyWithoutTenantInput;
 };
 export type TenantUncheckedCreateWithoutUsersInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutTenantInput;
     auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedCreateNestedManyWithoutTenantInput;
 };
 export type TenantCreateOrConnectWithoutUsersInput = {
     where: Prisma.TenantWhereUniqueInput;
@@ -397,44 +637,76 @@ export type TenantUpdateWithoutUsersInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     transactions?: Prisma.TransactionUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUpdateManyWithoutTenantNestedInput;
     auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUpdateManyWithoutTenantNestedInput;
 };
 export type TenantUncheckedUpdateWithoutUsersInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutTenantNestedInput;
     auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedUpdateManyWithoutTenantNestedInput;
 };
 export type TenantCreateWithoutTransactionsInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     users?: Prisma.UserCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutTenantInput;
     auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationCreateNestedManyWithoutTenantInput;
 };
 export type TenantUncheckedCreateWithoutTransactionsInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutTenantInput;
     auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedCreateNestedManyWithoutTenantInput;
 };
 export type TenantCreateOrConnectWithoutTransactionsInput = {
     where: Prisma.TenantWhereUniqueInput;
@@ -454,44 +726,76 @@ export type TenantUpdateWithoutTransactionsInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUpdateManyWithoutTenantNestedInput;
     auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUpdateManyWithoutTenantNestedInput;
 };
 export type TenantUncheckedUpdateWithoutTransactionsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutTenantNestedInput;
     auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedUpdateManyWithoutTenantNestedInput;
 };
 export type TenantCreateWithoutApiKeysInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     users?: Prisma.UserCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionCreateNestedManyWithoutTenantInput;
     auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationCreateNestedManyWithoutTenantInput;
 };
 export type TenantUncheckedCreateWithoutApiKeysInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutTenantInput;
     auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedCreateNestedManyWithoutTenantInput;
 };
 export type TenantCreateOrConnectWithoutApiKeysInput = {
     where: Prisma.TenantWhereUniqueInput;
@@ -511,44 +815,76 @@ export type TenantUpdateWithoutApiKeysInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUpdateManyWithoutTenantNestedInput;
     auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUpdateManyWithoutTenantNestedInput;
 };
 export type TenantUncheckedUpdateWithoutApiKeysInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutTenantNestedInput;
     auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedUpdateManyWithoutTenantNestedInput;
 };
 export type TenantCreateWithoutAuditLogsInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     users?: Prisma.UserCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationCreateNestedManyWithoutTenantInput;
 };
 export type TenantUncheckedCreateWithoutAuditLogsInput = {
     id?: string;
     name: string;
     subscriptionStatus?: string;
     stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
     createdAt?: Date | string;
     updatedAt?: Date | string;
     users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput;
     transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutTenantInput;
     apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutTenantInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedCreateNestedManyWithoutTenantInput;
 };
 export type TenantCreateOrConnectWithoutAuditLogsInput = {
     where: Prisma.TenantWhereUniqueInput;
@@ -568,22 +904,127 @@ export type TenantUpdateWithoutAuditLogsInput = {
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUpdateManyWithoutTenantNestedInput;
 };
 export type TenantUncheckedUpdateWithoutAuditLogsInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     name?: Prisma.StringFieldUpdateOperationsInput | string;
     subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
     stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
     createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput;
     transactions?: Prisma.TransactionUncheckedUpdateManyWithoutTenantNestedInput;
     apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutTenantNestedInput;
+    externalOperations?: Prisma.ExternalOperationUncheckedUpdateManyWithoutTenantNestedInput;
+};
+export type TenantCreateWithoutExternalOperationsInput = {
+    id?: string;
+    name: string;
+    subscriptionStatus?: string;
+    stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    users?: Prisma.UserCreateNestedManyWithoutTenantInput;
+    transactions?: Prisma.TransactionCreateNestedManyWithoutTenantInput;
+    apiKeys?: Prisma.ApiKeyCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogCreateNestedManyWithoutTenantInput;
+};
+export type TenantUncheckedCreateWithoutExternalOperationsInput = {
+    id?: string;
+    name: string;
+    subscriptionStatus?: string;
+    stripeCustomerId?: string | null;
+    stripeSubscriptionId?: string | null;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: Date | string | null;
+    billingSyncStatus?: string;
+    billingLeaseOwner?: string | null;
+    billingLeaseExpiresAt?: Date | string | null;
+    billingVersion?: bigint | number;
+    createdAt?: Date | string;
+    updatedAt?: Date | string;
+    users?: Prisma.UserUncheckedCreateNestedManyWithoutTenantInput;
+    transactions?: Prisma.TransactionUncheckedCreateNestedManyWithoutTenantInput;
+    apiKeys?: Prisma.ApiKeyUncheckedCreateNestedManyWithoutTenantInput;
+    auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutTenantInput;
+};
+export type TenantCreateOrConnectWithoutExternalOperationsInput = {
+    where: Prisma.TenantWhereUniqueInput;
+    create: Prisma.XOR<Prisma.TenantCreateWithoutExternalOperationsInput, Prisma.TenantUncheckedCreateWithoutExternalOperationsInput>;
+};
+export type TenantUpsertWithoutExternalOperationsInput = {
+    update: Prisma.XOR<Prisma.TenantUpdateWithoutExternalOperationsInput, Prisma.TenantUncheckedUpdateWithoutExternalOperationsInput>;
+    create: Prisma.XOR<Prisma.TenantCreateWithoutExternalOperationsInput, Prisma.TenantUncheckedCreateWithoutExternalOperationsInput>;
+    where?: Prisma.TenantWhereInput;
+};
+export type TenantUpdateToOneWithWhereWithoutExternalOperationsInput = {
+    where?: Prisma.TenantWhereInput;
+    data: Prisma.XOR<Prisma.TenantUpdateWithoutExternalOperationsInput, Prisma.TenantUncheckedUpdateWithoutExternalOperationsInput>;
+};
+export type TenantUpdateWithoutExternalOperationsInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    name?: Prisma.StringFieldUpdateOperationsInput | string;
+    subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    users?: Prisma.UserUpdateManyWithoutTenantNestedInput;
+    transactions?: Prisma.TransactionUpdateManyWithoutTenantNestedInput;
+    apiKeys?: Prisma.ApiKeyUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUpdateManyWithoutTenantNestedInput;
+};
+export type TenantUncheckedUpdateWithoutExternalOperationsInput = {
+    id?: Prisma.StringFieldUpdateOperationsInput | string;
+    name?: Prisma.StringFieldUpdateOperationsInput | string;
+    subscriptionStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    stripeCustomerId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    stripeSubscriptionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    subscriptionCancelAtPeriodEnd?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+    subscriptionCancelAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingSyncStatus?: Prisma.StringFieldUpdateOperationsInput | string;
+    billingLeaseOwner?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+    billingLeaseExpiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null;
+    billingVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number;
+    createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+    users?: Prisma.UserUncheckedUpdateManyWithoutTenantNestedInput;
+    transactions?: Prisma.TransactionUncheckedUpdateManyWithoutTenantNestedInput;
+    apiKeys?: Prisma.ApiKeyUncheckedUpdateManyWithoutTenantNestedInput;
+    auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutTenantNestedInput;
 };
 /**
  * Count Type TenantCountOutputType
@@ -593,12 +1034,14 @@ export type TenantCountOutputType = {
     transactions: number;
     apiKeys: number;
     auditLogs: number;
+    externalOperations: number;
 };
 export type TenantCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     users?: boolean | TenantCountOutputTypeCountUsersArgs;
     transactions?: boolean | TenantCountOutputTypeCountTransactionsArgs;
     apiKeys?: boolean | TenantCountOutputTypeCountApiKeysArgs;
     auditLogs?: boolean | TenantCountOutputTypeCountAuditLogsArgs;
+    externalOperations?: boolean | TenantCountOutputTypeCountExternalOperationsArgs;
 };
 /**
  * TenantCountOutputType without action
@@ -633,17 +1076,31 @@ export type TenantCountOutputTypeCountApiKeysArgs<ExtArgs extends runtime.Types.
 export type TenantCountOutputTypeCountAuditLogsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     where?: Prisma.AuditLogWhereInput;
 };
+/**
+ * TenantCountOutputType without action
+ */
+export type TenantCountOutputTypeCountExternalOperationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    where?: Prisma.ExternalOperationWhereInput;
+};
 export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
     id?: boolean;
     name?: boolean;
     subscriptionStatus?: boolean;
     stripeCustomerId?: boolean;
+    stripeSubscriptionId?: boolean;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: boolean;
+    billingSyncStatus?: boolean;
+    billingLeaseOwner?: boolean;
+    billingLeaseExpiresAt?: boolean;
+    billingVersion?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
     users?: boolean | Prisma.Tenant$usersArgs<ExtArgs>;
     transactions?: boolean | Prisma.Tenant$transactionsArgs<ExtArgs>;
     apiKeys?: boolean | Prisma.Tenant$apiKeysArgs<ExtArgs>;
     auditLogs?: boolean | Prisma.Tenant$auditLogsArgs<ExtArgs>;
+    externalOperations?: boolean | Prisma.Tenant$externalOperationsArgs<ExtArgs>;
     _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>;
 }, ExtArgs["result"]["tenant"]>;
 export type TenantSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -651,6 +1108,13 @@ export type TenantSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
     name?: boolean;
     subscriptionStatus?: boolean;
     stripeCustomerId?: boolean;
+    stripeSubscriptionId?: boolean;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: boolean;
+    billingSyncStatus?: boolean;
+    billingLeaseOwner?: boolean;
+    billingLeaseExpiresAt?: boolean;
+    billingVersion?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
 }, ExtArgs["result"]["tenant"]>;
@@ -659,6 +1123,13 @@ export type TenantSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
     name?: boolean;
     subscriptionStatus?: boolean;
     stripeCustomerId?: boolean;
+    stripeSubscriptionId?: boolean;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: boolean;
+    billingSyncStatus?: boolean;
+    billingLeaseOwner?: boolean;
+    billingLeaseExpiresAt?: boolean;
+    billingVersion?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
 }, ExtArgs["result"]["tenant"]>;
@@ -667,15 +1138,23 @@ export type TenantSelectScalar = {
     name?: boolean;
     subscriptionStatus?: boolean;
     stripeCustomerId?: boolean;
+    stripeSubscriptionId?: boolean;
+    subscriptionCancelAtPeriodEnd?: boolean;
+    subscriptionCancelAt?: boolean;
+    billingSyncStatus?: boolean;
+    billingLeaseOwner?: boolean;
+    billingLeaseExpiresAt?: boolean;
+    billingVersion?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
 };
-export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "subscriptionStatus" | "stripeCustomerId" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>;
+export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "subscriptionStatus" | "stripeCustomerId" | "stripeSubscriptionId" | "subscriptionCancelAtPeriodEnd" | "subscriptionCancelAt" | "billingSyncStatus" | "billingLeaseOwner" | "billingLeaseExpiresAt" | "billingVersion" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>;
 export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     users?: boolean | Prisma.Tenant$usersArgs<ExtArgs>;
     transactions?: boolean | Prisma.Tenant$transactionsArgs<ExtArgs>;
     apiKeys?: boolean | Prisma.Tenant$apiKeysArgs<ExtArgs>;
     auditLogs?: boolean | Prisma.Tenant$auditLogsArgs<ExtArgs>;
+    externalOperations?: boolean | Prisma.Tenant$externalOperationsArgs<ExtArgs>;
     _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type TenantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {};
@@ -687,12 +1166,20 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
         transactions: Prisma.$TransactionPayload<ExtArgs>[];
         apiKeys: Prisma.$ApiKeyPayload<ExtArgs>[];
         auditLogs: Prisma.$AuditLogPayload<ExtArgs>[];
+        externalOperations: Prisma.$ExternalOperationPayload<ExtArgs>[];
     };
     scalars: runtime.Types.Extensions.GetPayloadResult<{
         id: string;
         name: string;
         subscriptionStatus: string;
         stripeCustomerId: string | null;
+        stripeSubscriptionId: string | null;
+        subscriptionCancelAtPeriodEnd: boolean;
+        subscriptionCancelAt: Date | null;
+        billingSyncStatus: string;
+        billingLeaseOwner: string | null;
+        billingLeaseExpiresAt: Date | null;
+        billingVersion: bigint;
         createdAt: Date;
         updatedAt: Date;
     }, ExtArgs["result"]["tenant"]>;
@@ -1028,6 +1515,7 @@ export interface Prisma__TenantClient<T, Null = never, ExtArgs extends runtime.T
     transactions<T extends Prisma.Tenant$transactionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     apiKeys<T extends Prisma.Tenant$apiKeysArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$apiKeysArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ApiKeyPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     auditLogs<T extends Prisma.Tenant$auditLogsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AuditLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
+    externalOperations<T extends Prisma.Tenant$externalOperationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$externalOperationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExternalOperationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>;
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1057,6 +1545,13 @@ export interface TenantFieldRefs {
     readonly name: Prisma.FieldRef<"Tenant", 'String'>;
     readonly subscriptionStatus: Prisma.FieldRef<"Tenant", 'String'>;
     readonly stripeCustomerId: Prisma.FieldRef<"Tenant", 'String'>;
+    readonly stripeSubscriptionId: Prisma.FieldRef<"Tenant", 'String'>;
+    readonly subscriptionCancelAtPeriodEnd: Prisma.FieldRef<"Tenant", 'Boolean'>;
+    readonly subscriptionCancelAt: Prisma.FieldRef<"Tenant", 'DateTime'>;
+    readonly billingSyncStatus: Prisma.FieldRef<"Tenant", 'String'>;
+    readonly billingLeaseOwner: Prisma.FieldRef<"Tenant", 'String'>;
+    readonly billingLeaseExpiresAt: Prisma.FieldRef<"Tenant", 'DateTime'>;
+    readonly billingVersion: Prisma.FieldRef<"Tenant", 'BigInt'>;
     readonly createdAt: Prisma.FieldRef<"Tenant", 'DateTime'>;
     readonly updatedAt: Prisma.FieldRef<"Tenant", 'DateTime'>;
 }
@@ -1525,6 +2020,29 @@ export type Tenant$auditLogsArgs<ExtArgs extends runtime.Types.Extensions.Intern
     take?: number;
     skip?: number;
     distinct?: Prisma.AuditLogScalarFieldEnum | Prisma.AuditLogScalarFieldEnum[];
+};
+/**
+ * Tenant.externalOperations
+ */
+export type Tenant$externalOperationsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ExternalOperation
+     */
+    select?: Prisma.ExternalOperationSelect<ExtArgs> | null;
+    /**
+     * Omit specific fields from the ExternalOperation
+     */
+    omit?: Prisma.ExternalOperationOmit<ExtArgs> | null;
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: Prisma.ExternalOperationInclude<ExtArgs> | null;
+    where?: Prisma.ExternalOperationWhereInput;
+    orderBy?: Prisma.ExternalOperationOrderByWithRelationInput | Prisma.ExternalOperationOrderByWithRelationInput[];
+    cursor?: Prisma.ExternalOperationWhereUniqueInput;
+    take?: number;
+    skip?: number;
+    distinct?: Prisma.ExternalOperationScalarFieldEnum | Prisma.ExternalOperationScalarFieldEnum[];
 };
 /**
  * Tenant without action

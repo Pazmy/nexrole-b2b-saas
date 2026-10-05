@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailConfig } from "./email-config";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
@@ -20,6 +21,7 @@ const isBuildTime =
 let envData: z.infer<typeof envSchema>;
 
 if (isServer && !isBuildTime) {
+  emailConfig();
   const parsed = envSchema.safeParse({
     DATABASE_URL: process.env.DATABASE_URL,
     AUTH_SECRET: process.env.AUTH_SECRET,

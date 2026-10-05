@@ -14,8 +14,8 @@ RUN npm ci
 COPY apps/api/ ./apps/api/
 COPY packages/database/ ./packages/database/
 
-# Generate the type-safe Prisma client
-RUN npm run db:generate
+# Generate Prisma and compile the shared billing/database services from source.
+RUN npm run build -w packages/database
 
 # Build the TypeScript Express code
 RUN npm run build -w apps/api
