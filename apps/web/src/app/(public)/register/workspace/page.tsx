@@ -96,7 +96,7 @@ export default function RegisterWorkspacePage() {
             </div>
           </div>
 
-          <p className="text-xs text-zinc-400">Use a password with at least 12 characters (at most 72 bytes).</p>
+          <p className="text-xs text-zinc-400">Use a password with at least 12 characters.</p>
           {state?.error && (
             <p className="text-xs font-medium text-red-400 bg-red-950/30 border border-red-900/40 p-2.5 rounded-lg">
               {state.error}

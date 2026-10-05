@@ -54,7 +54,7 @@ export default function InviteAcceptanceForm({ token, email }: { token: string; 
           className="bg-zinc-950 border-zinc-800 text-white placeholder-zinc-700"
         />
         <p id="invite-password-help" className="text-xs text-zinc-400">
-          Use at least 12 characters (at most 72 bytes).
+          Use a password with at least 12 characters.
         </p>
       </div>
 

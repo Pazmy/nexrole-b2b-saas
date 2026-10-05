@@ -23,7 +23,7 @@ export function AccountForm({ title, description, action, fields = [], token, bu
         <label htmlFor={field.name} className="text-sm">{field.label}</label>
         <Input id={field.name} name={field.name} type={field.type} autoComplete={field.autoComplete} required disabled={pending}
           minLength={field.autoComplete === "new-password" ? 12 : undefined} />
-        {field.autoComplete === "new-password" && <p className="text-xs text-zinc-400">Use at least 12 characters (at most 72 bytes).</p>}
+        {field.autoComplete === "new-password" && <p className="text-xs text-zinc-400">Use a password with at least 12 characters.</p>}
       </div>)}
       {state?.error && <p role="alert" className="text-sm text-red-400">{state.error}</p>}
       <Button type="submit" disabled={pending}
